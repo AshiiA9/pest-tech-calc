@@ -109,10 +109,10 @@ select,input{
 <div class="wrap">
 
 <div class="tabs">
-<button class="tab active" onclick="showTab('lookup',this)">Lookup</button>
-<button class="tab" onclick="showTab('mix',this)">AI %</button>
-<button class="tab" onclick="showTab('rate',this)">Rate</button>
-<button class="tab" onclick="showTab('refill',this)">Refill</button>
+<button class="tab active" onclick="showTab('lookup')">Lookup</button>
+<button class="tab" onclick="showTab('mix')">AI %</button>
+<button class="tab" onclick="showTab('rate')">Rate</button>
+<button class="tab" onclick="showTab('refill')">Refill</button>
 </div>
 
 <div class="card">
@@ -122,10 +122,10 @@ select,input{
 
 <label>Tank Size</label>
 <div class="grid4">
-<button class="choice tank active" onclick="setTank(this,1)">1 Gal</button>
-<button class="choice tank" onclick="setTank(this,2.5)">2.5 Gal</button>
-<button class="choice tank" onclick="setTank(this,5)">5 Gal</button>
-<button class="choice tank" onclick="setTank(this,10)">10 Gal</button>
+<button class="choice tank active" onclick="setTank(1)">1 Gal</button>
+<button class="choice tank" onclick="setTank(2.5)">2.5 Gal</button>
+<button class="choice tank" onclick="setTank(5)">5 Gal</button>
+<button class="choice tank" onclick="setTank(10)">10 Gal</button>
 </div>
 
 <label>Product</label>
@@ -160,10 +160,10 @@ select,input{
 
 <label>Unit</label>
 <div class="grid4">
-<button class="choice unit active" onclick="setUnit(this,'floz')">fl oz</button>
-<button class="choice unit" onclick="setUnit(this,'g')">g</button>
-<button class="choice unit" onclick="setUnit(this,'ml')">ml</button>
-<button class="choice unit" onclick="setUnit(this,'oz')">oz</button>
+<button class="choice unit active" onclick="setUnit('floz')">fl oz</button>
+<button class="choice unit" onclick="setUnit('g')">g</button>
+<button class="choice unit" onclick="setUnit('ml')">ml</button>
+<button class="choice unit" onclick="setUnit('oz')">oz</button>
 </div>
 
 <label>Total Water / Carrier Gallons</label>
@@ -199,6 +199,7 @@ select,input{
 
 <div class="result" id="rateResult">Waiting...</div>
 </div>
+
 <div id="refillTab" class="hidden">
 <h2>Refill Calculator</h2>
 
@@ -218,8 +219,8 @@ select,input{
 
 </div>
 </div>
+  <script>
 
-<script>
 let currentTank = 1;
 let currentUnit = "floz";
 
@@ -232,9 +233,7 @@ const PRODUCTS = {
   "Bifen I/T": { unit:"fl oz", ai:7.9, rates:{1:1,2.5:2.5,5:5,10:10} }
 };
 
-function showTab(tab,btn){
-  document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
-  btn.classList.add("active");
+function showTab(tab){
 
   document.getElementById("lookupTab").classList.add("hidden");
   document.getElementById("mixTab").classList.add("hidden");
@@ -242,17 +241,192 @@ function showTab(tab,btn){
   document.getElementById("refillTab").classList.add("hidden");
 
   document.getElementById(tab + "Tab").classList.remove("hidden");
+
+  document.querySelectorAll(".tab").forEach(btn=>{
+    btn.classList.remove("active");
+  });
+
+  event.target.classList.add("active");
 }
 
-function setTank(btn,tank){
+function setTank(tank){
+
   currentTank = tank;
-  document.querySelectorAll(".tank").forEach(b=>b.classList.remove("active"));
-  btn.classList.add("active");
+
+  document.querySelectorAll(".tank").forEach(btn=>{
+    btn.classList.remove("active");
+  });
+
+  event.target.classList.add("active");
+
   updateLookup();
 }
 
-function setUnit(btn,unit){
+function setUnit(unit){
+
   currentUnit = unit;
-  document.querySelectorAll(".unit").forEach(b=>b.classList.remove("active"));
-  btn.classList.add("active");
+
+  document.querySelectorAll(".unit").forEach(btn=>{
+    btn.classList.remove("active");
+  });
+
+  event.target.classList.add("active");
 }
+
+function updateLookup(){
+
+  let product =
+  document.getElementById("lookupProduct").value;
+
+  if(product === ""){
+    document.getElementById("lookupResult").innerHTML =
+    "Select Product";
+    return;
+  }
+
+  if(product === "Niban Granules"){
+    document.getElementById("lookupResult").innerHTML =
+    "Use label application rate.";
+    return;
+  }
+
+  let amount =
+  PRODUCTS[product].rates[currentTank];
+
+  let unit =
+  PRODUCTS[product].unit;
+
+  document.getElementById("lookupResult").innerHTML =
+  product +
+  "<br>Add " +
+  amount +
+  " " +
+  unit +
+  "<br>For " +
+  currentTank +
+  " gallons";
+}
+
+function calcMix(){
+
+  let product =
+  document.getElementById("mixProduct").value;
+
+  let amount =
+  parseFloat(document.getElementById("mixAmount").value);
+
+  let gallons =
+  parseFloat(document.getElementById("mixGallons").value);
+
+  if(!amount || !gallons){
+    document.getElementById("mixResult").innerHTML =
+    "Enter amount and gallons.";
+    return;
+  }
+
+  let activePercent = 0;
+
+  if(product === "Alpine WSG"){
+
+    activePercent =
+    (amount / gallons) / 100;
+
+  } else {
+
+    let ai = PRODUCTS[product].ai;
+
+    if(currentUnit === "floz"){
+      activePercent =
+      (amount * ai * 0.0078125) / gallons;
+    }
+
+    if(currentUnit === "ml"){
+      activePercent =
+      (amount * ai / 3785.41) / gallons;
+    }
+
+    if(currentUnit === "g"){
+      activePercent =
+      (amount * ai / 10000) / gallons;
+    }
+
+    if(currentUnit === "oz"){
+      activePercent =
+      (amount * 28.3495 * ai / 10000) / gallons;
+    }
+  }
+
+  let carrierPercent =
+  100 - activePercent;
+
+  document.getElementById("mixResult").innerHTML =
+  "Active Ingredient: " +
+  activePercent.toFixed(4) +
+  "%<br>" +
+  "Carrier / Water: " +
+  carrierPercent.toFixed(4) +
+  "%";
+}
+
+function lookupRate(){
+
+  let product =
+  document.getElementById("rateProduct").value;
+
+  let tank =
+  parseFloat(document.getElementById("rateTank").value);
+
+  let amount =
+  PRODUCTS[product].rates[tank];
+
+  let unit =
+  PRODUCTS[product].unit;
+
+  document.getElementById("rateResult").innerHTML =
+  product +
+  "<br>Add " +
+  amount +
+  " " +
+  unit +
+  "<br>For " +
+  tank +
+  " gallons";
+}
+
+function calcRefill(){
+
+  let origAmount =
+  parseFloat(document.getElementById("origAmount").value);
+
+  let origTank =
+  parseFloat(document.getElementById("origTank").value);
+
+  let added =
+  parseFloat(document.getElementById("added").value);
+
+  if(!origAmount || !origTank || !added){
+    document.getElementById("refillResult").innerHTML =
+    "Enter refill information.";
+    return;
+  }
+
+  let ratePerGal =
+  origAmount / origTank;
+
+  let productToAdd =
+  ratePerGal * added;
+
+  document.getElementById("refillResult").innerHTML =
+  "Add " +
+  productToAdd.toFixed(3) +
+  " product units<br>Add " +
+  added +
+  " gallons water";
+}
+
+updateLookup();
+
+</script>
+
+</body>
+</html>
