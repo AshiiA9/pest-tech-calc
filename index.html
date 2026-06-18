@@ -1,113 +1,485 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pest Tech Calculator</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pest Tech Calc Pro</title>
 
 <style>
+:root{
+--pink:#ec4aa5;
+--blue:#0ea5e9;
+--purple:#7c3aed;
+--dark:#111827;
+--bg:#f7fbff;
+--card:#ffffff;
+--border:#dbe3ef;
+}
+
+*{
+box-sizing:border-box;
+}
+
 body{
-font-family:Arial,sans-serif;
-background:#f7fbff;
-padding:20px;
 margin:0;
+font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+background:var(--bg);
+color:var(--dark);
+}
+
+header{
+padding:18px;
+background:linear-gradient(135deg,var(--blue),var(--pink));
+color:white;
+}
+
+header h1{
+margin:0;
+font-size:24px;
+}
+
+.wrap{
+max-width:800px;
+margin:auto;
+padding:14px;
 }
 
 .card{
 background:white;
-padding:20px;
-border-radius:12px;
-box-shadow:0 2px 10px rgba(0,0,0,.1);
-max-width:500px;
-margin:auto;
+border:1px solid var(--border);
+border-radius:18px;
+padding:14px;
+margin-bottom:14px;
 }
 
-h1{
-color:#ec4aa5;
-text-align:center;
+h2{
+margin-top:0;
 }
 
 label{
-font-weight:bold;
 display:block;
-margin-top:15px;
+font-weight:700;
+margin-top:12px;
+margin-bottom:6px;
 }
 
-select,input{
+input,
+select{
 width:100%;
 padding:12px;
 font-size:18px;
-margin-top:5px;
+border:1px solid var(--border);
+border-radius:12px;
 }
 
 button{
-width:100%;
-padding:15px;
-font-size:20px;
-background:#0ea5e9;
-color:white;
 border:none;
-border-radius:10px;
-margin-top:20px;
+border-radius:12px;
+padding:12px;
+font-weight:700;
+cursor:pointer;
+}
+
+.btnRow{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:8px;
+margin-top:8px;
+}
+
+.selected{
+background:linear-gradient(135deg,var(--purple),var(--pink));
+color:white;
 }
 
 .result{
-font-size:28px;
-font-weight:bold;
-text-align:center;
-margin-top:20px;
-color:#7c3aed;
+margin-top:12px;
+padding:14px;
+background:#eef9ff;
+border-radius:14px;
+font-size:20px;
+font-weight:700;
+}
+
+.tab{
+background:white;
+border:1px solid var(--border);
+}
+
+.tab.active{
+background:linear-gradient(135deg,var(--purple),var(--pink));
+color:white;
+}
+
+.hidden{
+display:none;
 }
 </style>
 </head>
 
 <body>
 
-<div class="card">
+<header>
+<h1>Pest Tech Calc Pro</h1>
+<p>Finished Mix %, Label Rate Lookup, Refill Math</p>
+</header>
 
-<h1>Pest Tech Calculator</h1>
+<div class="wrap">
+
+<div class="btnRow">
+<button class="tab active" onclick="showTab('lookup',this)">Lookup</button>
+<button class="tab" onclick="showTab('mix',this)">Mix %</button>
+<button class="tab" onclick="showTab('rate',this)">Rate</button>
+<button class="tab" onclick="showTab('refill',this)">Refill</button>
+</div>
+<!-- QUICK LOOKUP TAB -->
+
+<div id="lookup" class="card">
+
+<h2>Quick Label Lookup</h2>
+
+<label>Tank Size</label>
+
+<div class="btnRow">
+<button class="tankBtn selected" onclick="setTank(1,this)">1 Gal</button>
+<button class="tankBtn" onclick="setTank(2.5,this)">2.5 Gal</button>
+<button class="tankBtn" onclick="setTank(5,this)">5 Gal</button>
+<button class="tankBtn" onclick="setTank(10,this)">10 Gal</button>
+</div>
+
+<label style="margin-top:15px;">Product</label>
+
+<select id="lookupProduct" onchange="updateLookup()">
+</select>
+
+<div id="lookupResult" class="result">
+Select Product
+</div>
+
+</div>
+
+<!-- MIX TAB -->
+
+<div id="mix" class="card hidden">
+
+<h2>Finished Mix % Calculator</h2>
 
 <label>Product</label>
-<select id="product">
-<option>CrossCheck Plus</option>
-<option>Taurus SC</option>
-<option>Alpine WSG</option>
-<option>Gentrol EC3</option>
-<option>Bifen IT</option>
-<option>Niban</option>
+
+<select id="mixProduct">
 </select>
 
 <label>Amount Added</label>
-<input id="amount" type="number">
 
-<label>Tank Size</label>
-<select id="tank">
-<option value="1">1 Gallon</option>
-<option value="2.5">2.5 Gallons</option>
-<option value="5">5 Gallons</option>
-<option value="10">10 Gallons</option>
-</select>
+<input
+type="number"
+id="amountAdded"
+placeholder="Enter amount">
 
-<button onclick="calc()">Calculate</button>
+<label>Unit</label>
 
-<div id="result" class="result"></div>
+<div class="btnRow">
+<button class="unitBtn selected" onclick="setUnit('g',this)">Grams</button>
+<button class="unitBtn" onclick="setUnit('floz',this)">Fl Oz</button>
+<button class="unitBtn" onclick="setUnit('ml',this)">mL</button>
+<button onclick="calcMix()">Calc</button>
+</div>
+
+<div id="mixResult" class="result">
+Waiting...
+</div>
 
 </div>
 
 <script>
-function calc(){
 
-let amount =
-parseFloat(document.getElementById('amount').value);
+let tankSize = 1;
+let unitType = "g";
 
-let tank =
-parseFloat(document.getElementById('tank').value);
+const PRODUCTS = [
 
-let percent =
-(amount / (tank * 128)) * 100;
+{
+name:"Alpine WSG",
+unit:"g",
+perGal:10
+},
 
-document.getElementById('result').innerHTML =
-percent.toFixed(3) + "%";
+{
+name:"Alpine WSG (20g)",
+unit:"g",
+perGal:20
+},
+
+{
+name:"Alpine WSG (30g)",
+unit:"g",
+perGal:30
+},
+
+{
+name:"CrossCheck Plus",
+unit:"floz",
+perGal:1.2
+},
+
+{
+name:"Taurus SC",
+unit:"floz",
+perGal:0.8
+},
+
+{
+name:"Gentrol EC3",
+unit:"floz",
+perGal:1.0
+},
+
+{
+name:"Bifen I/T",
+unit:"floz",
+perGal:1.0
+},
+
+{
+name:"Niban Granules",
+unit:"lbs",
+perGal:0
 }
+
+];
+
+function populateProducts(){
+
+let lookup =
+document.getElementById("lookupProduct");
+
+let mix =
+document.getElementById("mixProduct");
+
+PRODUCTS.forEach(p=>{
+
+lookup.innerHTML +=
+`<option>${p.name}</option>`;
+
+mix.innerHTML +=
+`<option>${p.name}</option>`;
+
+});
+
+updateLookup();
+
+}
+
+function setTank(size,btn){
+
+tankSize=size;
+
+document
+.querySelectorAll(".tankBtn")
+.forEach(b=>b.classList.remove("selected"));
+
+btn.classList.add("selected");
+
+updateLookup();
+
+}
+
+function setUnit(unit,btn){
+
+unitType=unit;
+
+document
+.querySelectorAll(".unitBtn")
+.forEach(b=>b.classList.remove("selected"));
+
+btn.classList.add("selected");
+
+}
+
+function updateLookup(){
+
+let selected =
+document.getElementById("lookupProduct").value;
+
+let product =
+PRODUCTS.find(
+p=>p.name===selected
+);
+
+if(!product) return;
+
+let total =
+product.perGal * tankSize;
+
+document.getElementById(
+"lookupResult"
+).innerHTML =
+
+`${selected}<br>
+${total.toFixed(2)}
+${product.unit}`;
+
+}
+<!-- RATE TAB -->
+
+<div id="rate" class="card hidden">
+<h2>Label Rate Calculator</h2>
+
+<label>Product</label>
+<select id="rateProduct"></select>
+
+<label>Tank Size</label>
+<div class="btnRow">
+<button onclick="setTank(1,this)">1 Gal</button>
+<button onclick="setTank(2.5,this)">2.5 Gal</button>
+<button onclick="setTank(5,this)">5 Gal</button>
+<button onclick="setTank(10,this)">10 Gal</button>
+</div>
+
+<button onclick="calcRate()">Calculate Rate</button>
+
+<div id="rateResult" class="result">Waiting...</div>
+</div>
+
+<!-- REFILL TAB -->
+
+<div id="refill" class="card hidden">
+<h2>Refill Calculator</h2>
+
+<label>Original Product Amount</label>
+<input id="originalProduct" type="number" placeholder="Example: 3">
+
+<label>Original Tank Size</label>
+<input id="originalTank" type="number" value="2.5">
+
+<label>Remaining Gallons</label>
+<input id="remainingGallons" type="number" placeholder="Example: 1.25">
+
+<label>Refill Back To</label>
+<input id="refillTo" type="number" value="2.5">
+
+<button onclick="calcRefill()">Calculate Refill</button>
+
+<div id="refillResult" class="result">Waiting...</div>
+</div>
+
+</div>
+
+<script>
+
+function calcMix(){
+
+let amount = parseFloat(document.getElementById("amountAdded").value);
+let productName = document.getElementById("mixProduct").value;
+
+if(!amount){
+document.getElementById("mixResult").innerHTML = "Enter an amount.";
+return;
+}
+
+let percent;
+
+if(unitType === "g"){
+percent = (amount / tankSize) / 100;
+}
+
+if(unitType === "floz"){
+percent = (amount / (tankSize * 128)) * 100;
+}
+
+if(unitType === "ml"){
+percent = (amount / (tankSize * 3785.41)) * 100;
+}
+
+let waterPercent = 100 - percent;
+
+document.getElementById("mixResult").innerHTML =
+`${productName}<br>
+Finished Mix: ${percent.toFixed(4)}%<br>
+Water/Carrier: ${waterPercent.toFixed(4)}%`;
+
+}
+
+function calcRate(){
+
+let selected = document.getElementById("rateProduct").value;
+
+let product = PRODUCTS.find(p=>p.name===selected);
+
+if(!product){
+document.getElementById("rateResult").innerHTML = "Select product.";
+return;
+}
+
+if(product.perGal === 0){
+document.getElementById("rateResult").innerHTML =
+`${product.name}<br>Granule/bait product. Use label application rate.`;
+return;
+}
+
+let total = product.perGal * tankSize;
+
+document.getElementById("rateResult").innerHTML =
+`${product.name}<br>
+Add ${total.toFixed(2)} ${product.unit}<br>
+For ${tankSize} gallons`;
+
+}
+
+function calcRefill(){
+
+let originalProduct = parseFloat(document.getElementById("originalProduct").value);
+let originalTank = parseFloat(document.getElementById("originalTank").value);
+let remaining = parseFloat(document.getElementById("remainingGallons").value);
+let refillTo = parseFloat(document.getElementById("refillTo").value);
+
+if(!originalProduct || !originalTank || !refillTo){
+document.getElementById("refillResult").innerHTML = "Enter refill info.";
+return;
+}
+
+let productPerGal = originalProduct / originalTank;
+let waterToAdd = refillTo - remaining;
+let productToAdd = productPerGal * waterToAdd;
+
+document.getElementById("refillResult").innerHTML =
+`Add ${productToAdd.toFixed(3)} product units<br>
+Add ${waterToAdd.toFixed(2)} gallons water<br>
+Original strength: ${productPerGal.toFixed(3)} per gallon`;
+
+}
+
+function showTab(tabId,btn){
+
+document.querySelectorAll(".card").forEach(card=>{
+card.classList.add("hidden");
+});
+
+document.getElementById(tabId).classList.remove("hidden");
+
+document.querySelectorAll(".tab").forEach(t=>{
+t.classList.remove("active");
+});
+
+btn.classList.add("active");
+
+}
+
+function finishSetup(){
+
+let rate =
+document.getElementById("rateProduct");
+
+PRODUCTS.forEach(p=>{
+rate.innerHTML += `<option>${p.name}</option>`;
+});
+
+populateProducts();
+
+}
+
+finishSetup();
+
 </script>
 
 </body>
