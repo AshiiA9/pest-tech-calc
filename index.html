@@ -96,11 +96,6 @@ select,input{
   font-weight:800;
   line-height:1.45;
 }
-.small{
-  font-size:14px;
-  color:#667085;
-  font-weight:500;
-}
 </style>
 </head>
 
@@ -134,7 +129,7 @@ select,input{
 </div>
 
 <label>Product</label>
-<select id="lookupProduct">
+<select id="lookupProduct" onchange="updateLookup()">
 <option value="">Select Product</option>
 <option>CrossCheck Plus</option>
 <option>Alpine WSG</option>
@@ -204,7 +199,6 @@ select,input{
 
 <div class="result" id="rateResult">Waiting...</div>
 </div>
-
 <div id="refillTab" class="hidden">
 <h2>Refill Calculator</h2>
 
@@ -213,9 +207,6 @@ select,input{
 
 <label>Original Tank Size</label>
 <input id="origTank" type="number" placeholder="Example: 2.5">
-
-<label>Gallons Remaining</label>
-<input id="remaining" type="number" placeholder="Example: 1.25">
 
 <label>Gallons Being Added</label>
 <input id="added" type="number" placeholder="Example: 1.25">
@@ -233,272 +224,35 @@ let currentTank = 1;
 let currentUnit = "floz";
 
 const PRODUCTS = {
-  "CrossCheck Plus": {
-    unit:"fl oz",
-    ai:6.4,
-    rates:{1:1.2,2.5:3,5:6,10:12}
-  },
-  "Alpine WSG": {
-    unit:"g",
-    ai:100,
-    rates:{1:30,2.5:75,5:150,10:300}
-  },
-  "Gentrol EC3": {
-    unit:"fl oz",
-    ai:9,
-    rates:{1:1,2.5:2.5,5:5,10:10}
-  },
-  "Taurus SC": {
-    unit:"fl oz",
-    ai:9.1,
-    rates:{1:0.8,2.5:2,5:4,10:8}
-  },
-  "Cyzmic CS": {
-    unit:"fl oz",
-    ai:9.7,
-    rates:{1:0.5,2.5:1.25,5:2.5,10:5}
-  },
-  "Bifen I/T": {
-    unit:"fl oz",
-    ai:7.9,
-    rates:{1:1,2.5:2.5,5:5,10:10}
-  }function showTab(tab,btn){
+  "CrossCheck Plus": { unit:"fl oz", ai:6.4, rates:{1:1.2,2.5:3,5:6,10:12} },
+  "Alpine WSG": { unit:"g", ai:100, rates:{1:30,2.5:75,5:150,10:300} },
+  "Gentrol EC3": { unit:"fl oz", ai:9, rates:{1:1,2.5:2.5,5:5,10:10} },
+  "Taurus SC": { unit:"fl oz", ai:9.1, rates:{1:0.8,2.5:2,5:4,10:8} },
+  "Cyzmic CS": { unit:"fl oz", ai:9.7, rates:{1:0.5,2.5:1.25,5:2.5,10:5} },
+  "Bifen I/T": { unit:"fl oz", ai:7.9, rates:{1:1,2.5:2.5,5:5,10:10} }
+};
 
-document.querySelectorAll(".tab").forEach(b=>{
-b.classList.remove("active");
-});
+function showTab(tab,btn){
+  document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
 
-btn.classList.add("active");
+  document.getElementById("lookupTab").classList.add("hidden");
+  document.getElementById("mixTab").classList.add("hidden");
+  document.getElementById("rateTab").classList.add("hidden");
+  document.getElementById("refillTab").classList.add("hidden");
 
-document.getElementById("lookupTab").classList.add("hidden");
-document.getElementById("mixTab").classList.add("hidden");
-document.getElementById("rateTab").classList.add("hidden");
-document.getElementById("refillTab").classList.add("hidden");
-
-document.getElementById(tab + "Tab").classList.remove("hidden");
-
+  document.getElementById(tab + "Tab").classList.remove("hidden");
 }
 
 function setTank(btn,tank){
-
-currentTank = tank;
-
-document.querySelectorAll(".tank").forEach(b=>{
-b.classList.remove("active");
-});
-
-btn.classList.add("active");
-
-updateLookup();
-
+  currentTank = tank;
+  document.querySelectorAll(".tank").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  updateLookup();
 }
 
 function setUnit(btn,unit){
-
-currentUnit = unit;
-
-document.querySelectorAll(".unit").forEach(b=>{
-b.classList.remove("active");
-});
-
-btn.classList.add("active");
-
+  currentUnit = unit;
+  document.querySelectorAll(".unit").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
 }
-
-document.getElementById("lookupProduct")
-.addEventListener("change",updateLookup);
-
-function updateLookup(){
-
-let product =
-document.getElementById("lookupProduct").value;
-
-if(product === ""){
-document.getElementById("lookupResult").innerHTML =
-"Select Product";
-return;
-}
-
-if(product === "Niban Granules"){
-document.getElementById("lookupResult").innerHTML =
-"Niban Granules<br>Use label application rate.";
-return;
-}
-
-let amount =
-PRODUCTS[product].rates[currentTank];
-
-let unit =
-PRODUCTS[product].unit;
-
-document.getElementById("lookupResult").innerHTML =
-product +
-"<br>Add " +
-amount +
-" " +
-unit +
-"<br>For " +
-currentTank +
-" gallons";
-
-}
-
-function calcMix(){
-
-let product =
-document.getElementById("mixProduct").value;
-
-let amount =
-parseFloat(document.getElementById("mixAmount").value);
-
-let gallons =
-parseFloat(document.getElementById("mixGallons").value);
-
-if(!amount || !gallons){
-document.getElementById("mixResult").innerHTML =
-"Enter amount and gallons.";
-return;
-}
-
-let ai =
-PRODUCTS[product].ai;
-
-let activePercent = 0;
-
-/* Alpine WSG field convention:
-10g/gal = .1%
-20g/gal = .2%
-30g/gal = .3%
-*/
-
-if(product === "Alpine WSG"){
-
-activePercent =
-(amount / gallons) / 100;
-
-}else{
-
-if(currentUnit === "floz"){
-
-activePercent =
-(amount * ai * 0.0078125) / gallons;
-
-}
-
-if(currentUnit === "ml"){
-
-activePercent =
-(amount * ai / 3785.41) / gallons;
-
-}
-
-if(currentUnit === "g"){
-
-activePercent =
-(amount * ai / 10000) / gallons;
-
-}
-
-if(currentUnit === "oz"){
-
-activePercent =
-(amount * 28.3495 * ai / 10000) / gallons;
-
-}
-
-}
-
-let carrierPercent =
-100 - activePercent;
-
-document.getElementById("mixResult").innerHTML =
-
-"Active Ingredient: " +
-activePercent.toFixed(4) +
-"%<br>" +
-
-"Carrier / Water: " +
-carrierPercent.toFixed(4) +
-"%";
-
-}
-
-function lookupRate(){
-
-let product =
-document.getElementById("rateProduct").value;
-
-let tank =
-parseFloat(
-document.getElementById("rateTank").value
-);
-
-let amount =
-PRODUCTS[product].rates[tank];
-
-let unit =
-PRODUCTS[product].unit;
-
-document.getElementById("rateResult").innerHTML =
-
-product +
-"<br>Add " +
-amount +
-" " +
-unit +
-"<br>For " +
-tank +
-" gallons";
-
-}
-
-function calcRefill(){
-
-let origAmount =
-parseFloat(
-document.getElementById("origAmount").value
-);
-
-let origTank =
-parseFloat(
-document.getElementById("origTank").value
-);
-
-let added =
-parseFloat(
-document.getElementById("added").value
-);
-
-if(!origAmount || !origTank || !added){
-
-document.getElementById("refillResult").innerHTML =
-"Enter refill information.";
-
-return;
-}
-
-let ratePerGal =
-origAmount / origTank;
-
-let productToAdd =
-ratePerGal * added;
-
-document.getElementById("refillResult").innerHTML =
-
-"Add " +
-productToAdd.toFixed(3) +
-" product units<br>" +
-
-"Add " +
-added +
-" gallons water";
-
-}
-
-updateLookup();
-
-</script>
-
-</body>
-</html>
-};
