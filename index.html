@@ -24,6 +24,11 @@ select,input{width:100%;padding:14px;border-radius:14px;border:none;background:#
 .calcBtn{width:100%;margin-top:18px;border:none;padding:16px;border-radius:16px;background:#0ea5e9;color:white;font-size:18px;font-weight:800;}
 .result{margin-top:18px;padding:18px;border-radius:18px;background:#edf7ff;font-size:20px;font-weight:800;line-height:1.45;}
 .note{font-size:14px;color:#475569;margin-top:10px;line-height:1.35;}
+.okBox{background:#e8fff1;border:2px solid #16a34a;color:#166534;}
+.lowBox{background:#fff7ed;border:2px solid #f97316;color:#9a3412;}
+.highBox{background:#fff1f2;border:2px solid #dc2626;color:#991b1b;}
+.manualBox{background:#f8fafc;border:2px solid #64748b;color:#334155;}
+.smallText{font-size:14px;font-weight:700;margin-top:8px;line-height:1.35;}
 </style>
 </head>
 
@@ -128,179 +133,312 @@ select,input{width:100%;padding:14px;border-radius:14px;border:none;background:#
 </div>
 
 <script>
+
 let currentTank = 1;
 let currentUnit = "floz";
 
 const PRODUCTS = {
-  "CrossCheck Plus": {unit:"fl oz", ai:7.9, rates:{1:1,2.5:2.5,5:5,10:10}, note:"Approx. 0.06% bifenthrin finished dilution."},
-  "Bifen I/T": {unit:"fl oz", ai:7.9, rates:{1:1,2.5:2.5,5:5,10:10}, note:"Approx. 0.06% bifenthrin finished dilution."},
-  "Bifen XTS": {unit:"fl oz", ai:25.1, rates:{1:0.32,2.5:0.8,5:1.6,10:3.2}, note:"Approx. 0.06% bifenthrin finished dilution."},
-  "Taurus SC": {unit:"fl oz", ai:9.1, rates:{1:0.8,2.5:2,5:4,10:8}, note:"Approx. 0.06% fipronil finished dilution."},
-  "Termidor SC": {unit:"fl oz", ai:9.1, rates:{1:0.8,2.5:2,5:4,10:8}, note:"Approx. 0.06% fipronil finished dilution."},
-  "Termidor HE": {unit:"fl oz", ai:8.73, rates:{1:0.8,2.5:2,5:4,10:8}, note:"Common 0.06% finished dilution; check HE label for termite-specific volume rules."},
-  "Alpine WSG": {unit:"g", ai:40, rates:{1:30,2.5:75,5:150,10:300}, note:"High rate shown: 30 g per gallon."},
-  "Gentrol IGR": {unit:"fl oz", ai:9, rates:{1:1,2.5:2.5,5:5,10:10}, note:"Hydroprene IGR. Common rate: 1 fl oz per gallon."},
-  "Gentrol Complete EC3": {unit:"fl oz", ai:3, rates:{1:1.3,2.5:3.25,5:6.5,10:13}, note:"Contains adulticide + IGR. Label range starts around 1.3 fl oz per gallon."},
-  "Cyzmic CS": {unit:"fl oz", ai:9.7, rates:{1:0.8,2.5:2,5:4,10:8}, note:"General helper rate. Confirm target pest on label."},
-  "CrossFire": {unit:"fl oz", ai:14.1, rates:{1:13,2.5:32.5,5:65,10:130}, note:"Bed bug concentrate. Common mix: 13 fl oz per gallon."},
-  "Niban Granules": {unit:"manual", ai:0, rates:null, note:"Granular bait. Apply by label rate, not tank mix."},
-  "Final Bait Blox": {unit:"manual", ai:0, rates:null, note:"Rodent bait. Place only according to label and station rules."},
-  "Rodent Bait Stations": {unit:"manual", ai:0, rates:null, note:"Material item, not a mix product."},
-  "Trelona ATBS": {unit:"manual", ai:0, rates:null, note:"Termite bait system. Follow station inspection/service label."},
-  "In2Mix Packets": {unit:"manual", ai:0, rates:null, note:"Mosquito station packet. Use per In2Care station directions."},
-  "Mouse Sticky Traps": {unit:"manual", ai:0, rates:null, note:"Trap item, not a mix product."},
-  "T-Rex Snap Traps": {unit:"manual", ai:0, rates:null, note:"Trap item, not a mix product."},
-  "Tri-Die / Tri-Dust": {unit:"manual", ai:0, rates:null, note:"Dust product. Apply lightly per label; do not tank mix."},
-  "Wasp & Hornet Spray": {unit:"manual", ai:0, rates:null, note:"Aerosol/ready-to-use item. Follow can label."},
-  "Niban FG": {unit:"manual", ai:0, rates:null, note:"Granular bait. Apply by label rate."},
-  "Advion Ant Gel": {unit:"manual", ai:0, rates:null, note:"Gel bait. Apply small placements per label."},
-  "Advion Roach Gel": {unit:"manual", ai:0, rates:null, note:"Gel bait. Apply small placements per label."},
-  "Maxforce FC Magnum": {unit:"manual", ai:0, rates:null, note:"Roach gel bait. Apply per label."},
-  "Maxforce Quantum": {unit:"manual", ai:0, rates:null, note:"Ant gel bait. Apply per label."},
-  "Advance 375A": {unit:"manual", ai:0, rates:null, note:"Granular ant bait. Apply per label."},
-  "Glue Boards": {unit:"manual", ai:0, rates:null, note:"Monitoring/trap item."},
-  "Monitoring Stations": {unit:"manual", ai:0, rates:null, note:"Monitoring item."},
-  "Copper Mesh": {unit:"manual", ai:0, rates:null, note:"Exclusion material."},
-  "Door Sweeps": {unit:"manual", ai:0, rates:null, note:"Exclusion material."},
-  "Exclusion Materials": {unit:"manual", ai:0, rates:null, note:"Seal gaps per job needs."}
+  "CrossCheck Plus": {
+    unit:"fl oz",
+    ai:7.9,
+    rates:{1:1,2.5:2.5,5:5,10:10},
+    minRatePerGal:0.5,
+    maxRatePerGal:1,
+    minAI:0.03,
+    maxAI:0.06,
+    note:"Common bifenthrin range: 0.5–1 fl oz per gallon. 1 fl oz/gal is about 0.06% finished bifenthrin.",
+    source:"EPA / product label"
+  },
+
+  "Bifen I/T": {
+    unit:"fl oz",
+    ai:7.9,
+    rates:{1:1,2.5:2.5,5:5,10:10},
+    minRatePerGal:0.5,
+    maxRatePerGal:1,
+    minAI:0.03,
+    maxAI:0.06,
+    note:"Common bifenthrin range: 0.5–1 fl oz per gallon. 1 fl oz/gal is about 0.06% finished bifenthrin.",
+    source:"EPA / Bifen I/T specimen label"
+  },
+
+  "Bifen XTS": {
+    unit:"fl oz",
+    ai:25.1,
+    rates:{1:0.32,2.5:0.8,5:1.6,10:3.2},
+    minRatePerGal:0.16,
+    maxRatePerGal:0.32,
+    minAI:0.03,
+    maxAI:0.06,
+    note:"0.32 fl oz/gal is about 0.06% finished bifenthrin.",
+    source:"EPA / product label"
+  },
+
+  "Taurus SC": {
+    unit:"fl oz",
+    ai:9.1,
+    rates:{1:0.8,2.5:2,5:4,10:8},
+    minRatePerGal:0.8,
+    maxRatePerGal:1.6,
+    minAI:0.06,
+    maxAI:0.125,
+    note:"0.8 fl oz/gal = 0.06%. 1.2 fl oz/gal = 0.09%. 1.6 fl oz/gal = 0.125%. Follow termite/general pest label limits.",
+    source:"EPA Taurus SC label"
+  },
+
+  "Termidor SC": {
+    unit:"fl oz",
+    ai:9.1,
+    rates:{1:0.8,2.5:2,5:4,10:8},
+    minRatePerGal:0.8,
+    maxRatePerGal:1.6,
+    minAI:0.06,
+    maxAI:0.125,
+    note:"0.8 fl oz/gal = 0.06%. Higher rates are label-specific. Confirm target use.",
+    source:"EPA Termidor SC label"
+  },
+
+  "Termidor HE": {
+    unit:"fl oz",
+    ai:8.73,
+    rates:{1:0.8,2.5:2,5:4,10:8},
+    minRatePerGal:0.8,
+    maxRatePerGal:0.8,
+    minAI:0.06,
+    maxAI:0.06,
+    note:"Common termite finished dilution is 0.06%. HE has specific volume/directional rules.",
+    source:"EPA Termidor HE label"
+  },
+
+  "Alpine WSG": {
+    unit:"g",
+    ai:40,
+    rates:{1:30,2.5:75,5:150,10:300},
+    minRatePerGal:10,
+    maxRatePerGal:30,
+    minAI:0.1,
+    maxAI:0.3,
+    note:"Common label range: 10–30 g per gallon. 30 g/gal is about 0.3% dinotefuran.",
+    source:"EPA Alpine WSG label"
+  },
+    "CrossFire": {
+    unit:"fl oz",
+    ai:1.42,
+    rates:{1:13,2.5:32.5,5:65,10:130},
+    minRatePerGal:13,
+    maxRatePerGal:13,
+    minAI:1.42,
+    maxAI:1.42,
+    note:"CrossFire label rate is 13 fl oz per gallon.",
+    source:"CrossFire label"
+  },
+
+  "Gentrol EC3": {
+    unit:"ml",
+    ai:9,
+    rates:{1:29.6,2.5:74,5:148,10:296},
+    minRatePerGal:29.6,
+    maxRatePerGal:29.6,
+    minAI:0.2,
+    maxAI:0.2,
+    note:"1 oz (29.6 mL) per gallon.",
+    source:"Gentrol label"
+  },
+
+  "Cyzmic CS": {
+    unit:"fl oz",
+    ai:9.7,
+    rates:{1:0.25,2.5:0.625,5:1.25,10:2.5},
+    minRatePerGal:0.25,
+    maxRatePerGal:1,
+    minAI:0.02,
+    maxAI:0.08,
+    note:"Common general pest range 0.25–1.0 fl oz per gallon.",
+    source:"Cyzmic CS label"
+  }
+
 };
 
-function fillSelects(){
-  const names = Object.keys(PRODUCTS);
-  ["lookupProduct","mixProduct","rateProduct"].forEach(id=>{
-    const sel = document.getElementById(id);
-    sel.innerHTML = "";
-    if(id === "lookupProduct"){
-      sel.innerHTML += `<option value="">Select Product</option>`;
-    }
-    names.forEach(name=>{
-      if(id === "mixProduct" && PRODUCTS[name].ai <= 0) return;
-      sel.innerHTML += `<option>${name}</option>`;
+function showTab(tab,btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+
+  document.getElementById('lookupTab').classList.add('hidden');
+  document.getElementById('mixTab').classList.add('hidden');
+  document.getElementById('rateTab').classList.add('hidden');
+  document.getElementById('refillTab').classList.add('hidden');
+
+  document.getElementById(tab+'Tab').classList.remove('hidden');
+}
+
+function populateProducts(){
+
+  const selects = [
+    document.getElementById('lookupProduct'),
+    document.getElementById('mixProduct'),
+    document.getElementById('rateProduct')
+  ];
+
+  selects.forEach(select=>{
+    select.innerHTML='';
+
+    Object.keys(PRODUCTS).forEach(product=>{
+      const option=document.createElement('option');
+      option.value=product;
+      option.textContent=product;
+      select.appendChild(option);
     });
   });
+
+  updateLookup();
 }
 
-function showTab(tab,btn){
-  ["lookupTab","mixTab","rateTab","refillTab"].forEach(id=>{
-    document.getElementById(id).classList.add("hidden");
-  });
-  document.getElementById(tab + "Tab").classList.remove("hidden");
-  document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
-  btn.classList.add("active");
-}
+function setTank(val,btn){
+  currentTank=val;
 
-function setTank(tank,btn){
-  currentTank = tank;
-  document.querySelectorAll(".tank").forEach(b=>b.classList.remove("active"));
-  btn.classList.add("active");
+  document.querySelectorAll('.tank')
+    .forEach(b=>b.classList.remove('active'));
+
+  btn.classList.add('active');
+
   updateLookup();
 }
 
 function setUnit(unit,btn){
-  currentUnit = unit;
-  document.querySelectorAll(".unit").forEach(b=>b.classList.remove("active"));
-  btn.classList.add("active");
+  currentUnit=unit;
+
+  document.querySelectorAll('.unit')
+    .forEach(b=>b.classList.remove('active'));
+
+  btn.classList.add('active');
 }
 
 function updateLookup(){
-  const product = document.getElementById("lookupProduct").value;
-  const box = document.getElementById("lookupResult");
 
-  if(product === ""){
-    box.innerHTML = "Select Product";
-    return;
-  }
+  const product =
+    PRODUCTS[document.getElementById('lookupProduct').value];
 
-  const p = PRODUCTS[product];
+  if(!product) return;
 
-  if(!p.rates){
-    box.innerHTML = product + "<br>" + p.note;
-    return;
-  }
+  const rate = product.rates[currentTank];
 
-  box.innerHTML =
-    product +
-    "<br>Add " + p.rates[currentTank] + " " + p.unit +
-    "<br>For " + currentTank + " gallons" +
-    "<br><br>" + p.note;
-}
-
-function calcMix(){
-  const product = document.getElementById("mixProduct").value;
-  const amount = parseFloat(document.getElementById("mixAmount").value);
-  const gallons = parseFloat(document.getElementById("mixGallons").value);
-  const p = PRODUCTS[product];
-
-  if(!amount || !gallons){
-    document.getElementById("mixResult").innerHTML = "Enter amount and gallons.";
-    return;
-  }
-
-  let activePercent = 0;
-
-  if(currentUnit === "floz"){
-    activePercent = (amount * p.ai * 0.0078125) / gallons;
-  }
-
-  if(currentUnit === "ml"){
-    activePercent = (amount * p.ai / 3785.41) / gallons;
-  }
-
-  if(currentUnit === "g"){
-    activePercent = ((amount * (p.ai / 100)) / (gallons * 3785.41)) * 100;
-  }
-
-  if(currentUnit === "oz"){
-    activePercent = (((amount * 28.3495) * (p.ai / 100)) / (gallons * 3785.41)) * 100;
-  }
-
-  const carrierPercent = 100 - activePercent;
-
-  document.getElementById("mixResult").innerHTML =
-    "Product: " + product +
-    "<br>Active Ingredient: " + activePercent.toFixed(4) + "%" +
-    "<br>Carrier / Other: " + carrierPercent.toFixed(4) + "%";
+  document.getElementById('lookupResult').innerHTML=
+    `<b>${rate} ${product.unit}</b><br>
+     per ${currentTank} gallon tank<br><br>
+     <div class="smallText">${product.note}</div>`;
 }
 
 function lookupRate(){
-  const product = document.getElementById("rateProduct").value;
-  const tank = parseFloat(document.getElementById("rateTank").value);
-  const p = PRODUCTS[product];
 
-  if(!p.rates){
-    document.getElementById("rateResult").innerHTML =
-      product + "<br>" + p.note;
+  const name =
+    document.getElementById('rateProduct').value;
+
+  const tank =
+    document.getElementById('rateTank').value;
+
+  const p = PRODUCTS[name];
+
+  document.getElementById('rateResult').innerHTML=
+    `<b>${p.rates[tank]} ${p.unit}</b><br>
+     per ${tank} gallon tank
+     <div class="smallText">
+     ${p.note}<br><br>
+     Source: ${p.source}
+     </div>`;
+}
+
+function calcMix(){
+
+  const productName =
+    document.getElementById('mixProduct').value;
+
+  const p = PRODUCTS[productName];
+
+  const amount =
+    parseFloat(document.getElementById('mixAmount').value);
+
+  const gallons =
+    parseFloat(document.getElementById('mixGallons').value);
+
+  if(!amount || !gallons){
+    document.getElementById('mixResult').innerHTML =
+      'Enter values';
     return;
   }
 
-  document.getElementById("rateResult").innerHTML =
-    product +
-    "<br>Add " + p.rates[tank] + " " + p.unit +
-    "<br>For " + tank + " gallons" +
-    "<br><br>" + p.note;
+  let activeAmount = amount;
+
+  if(currentUnit==="ml"){
+    activeAmount = amount / 29.5735;
+  }
+
+  if(currentUnit==="g"){
+    activeAmount = amount / 28.3495;
+  }
+
+  const finishedAI =
+    ((activeAmount * (p.ai/100))
+    /(gallons*128))*100;
+
+  const rounded =
+    finishedAI.toFixed(3);
+    let statusClass = "manualBox";
+  let statusText = "Manual Review";
+
+  if(finishedAI < p.minAI){
+    statusClass = "lowBox";
+    statusText = "⚠️ Below common label range";
+  } else if(finishedAI > p.maxAI){
+    statusClass = "highBox";
+    statusText = "🚫 Above common label range";
+  } else {
+    statusClass = "okBox";
+    statusText = "✅ Label Range OK";
+  }
+
+  document.getElementById('mixResult').className =
+    "result " + statusClass;
+
+  document.getElementById('mixResult').innerHTML =
+    `<b>${rounded}% finished active ingredient</b><br>
+     ${statusText}
+     <div class="smallText">
+     Label/reference range: ${p.minAI}% – ${p.maxAI}% finished AI<br>
+     ${p.note}<br><br>
+     Source: ${p.source}
+     </div>`;
 }
 
 function calcRefill(){
-  const origAmount = parseFloat(document.getElementById("origAmount").value);
-  const origTank = parseFloat(document.getElementById("origTank").value);
-  const added = parseFloat(document.getElementById("added").value);
+
+  const origAmount =
+    parseFloat(document.getElementById('origAmount').value);
+
+  const origTank =
+    parseFloat(document.getElementById('origTank').value);
+
+  const added =
+    parseFloat(document.getElementById('added').value);
 
   if(!origAmount || !origTank || !added){
-    document.getElementById("refillResult").innerHTML = "Enter refill information.";
+    document.getElementById('refillResult').innerHTML =
+      'Enter all values';
     return;
   }
 
   const ratePerGal = origAmount / origTank;
-  const productToAdd = ratePerGal * added;
+  const addProduct = ratePerGal * added;
 
-  document.getElementById("refillResult").innerHTML =
-    "Add " + productToAdd.toFixed(3) + " product units" +
-    "<br>Add " + added + " gallons water";
+  document.getElementById('refillResult').innerHTML =
+    `<b>Add ${addProduct.toFixed(2)} fl oz</b><br>
+     to ${added} gallon(s) of water
+     <div class="smallText">
+     Original rate: ${ratePerGal.toFixed(2)} fl oz per gallon
+     </div>`;
 }
 
-fillSelects();
-updateLookup();
-</script>
+populateProducts();
 
+</script>
 </body>
 </html>
