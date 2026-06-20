@@ -100,11 +100,17 @@ button{border:0;background:linear-gradient(135deg,var(--blue),var(--pink));color
     </div>
   </div>
 
-  <label>Compare Against</label>
-  <select id="aiTarget"></select>
+  <label>Service / Pest Preset</label>
+<select id="presetSelect" onchange="applyPreset()"></select>
 
-  <button onclick="calcAI()">Calculate & Check</button>
-  <div id="aiResult" class="result">Waiting...</div>
+<label>Product / Material</label>
+<select id="lookupProduct" onchange="fillTargets('lookup')"></select>
+
+<label>Target / Label Rate</label>
+<select id="lookupTarget"></select>
+
+<button onclick="lookupRate()">Lookup Rate</button>
+<div id="lookupResult" class="result">Waiting...</div>
 </div><div id="rate" class="card hidden">
   <h2>Label Rate Calculator</h2>
 
@@ -299,23 +305,86 @@ const PRODUCTS={
   }
 };
 
+const PEST_GUIDES = {
+  fireAnts:"Fire ants: Bait-first or two-step management is usually best. Treat active mounds when needed. For liquid yard/perimeter support, use products specifically labeled for fire ants.",
+  millipedes:"Millipedes: Moisture pest. Focus on mulch, leaf litter, foundation cracks, thresholds, garages, crawlspace entries, and damp shaded areas.",
+  centipedes:"Centipedes: Usually indicate moisture and insect prey. Focus on cracks, garages, crawlspace entries, foundations, and harborage areas.",
+  stinkBugs:"Stink bugs: Overwintering invader. Focus around windows, doors, siding gaps, soffits, attic vents, and sunny walls before fall entry.",
+  boxelderBugs:"Boxelder bugs: Overwintering nuisance pest. Focus on sunny walls, windows, doors, utility penetrations, and exterior congregation sites.",
+  springtails:"Springtails: Moisture pest. Correct moisture first. Treat damp mulch, slab edges, drains, crawlspaces, bathrooms, basements, and entry points.",
+  pillbugsSowbugs:"Pillbugs/sowbugs: Moisture pests. Focus on mulch, leaf litter, foundation edges, garages, crawlspaces, and damp areas.",
+  earwigs:"Earwigs: Moisture and harborage pest. Treat mulch beds, foundation cracks, crawlspace entries, garages, and shaded areas.",
+  crickets:"Crickets: Focus on garages, crawlspaces, basements, utility penetrations, and dark harborage areas.",
+  silverfish:"Silverfish/firebrats: Treat cracks, voids, plumbing penetrations, bathrooms, attics, storage areas, and baseboards.",
+  asianLadyBeetles:"Asian lady beetles: Overwintering invader. Focus on sunny walls, soffits, windows, doors, and siding gaps.",
+  kudzuBugs:"Kudzu bugs: Occasional southeastern invader. Focus on windows, soffits, doors, and sunny walls.",
+  fleasTicks:"Fleas/ticks: Focus on pet resting areas, shaded lawn edges, crawlspace entries, and transition zones.",
+  spiders:"Spiders: De-web first. Focus on eaves, corners, lights, garages, crawlspaces, basements, and harborage cracks.",
+  waspsHornets:"Wasps/hornets: Focus on eaves, soffits, porch ceilings, roof returns, and active nest sites.",
+  mosquitoes:"Mosquitoes: Focus on vegetation, shaded resting sites, under decks, and standing-water sources.",
+  carpenterAnts:"Carpenter ants: Focus on moisture-damaged wood, trails, foundations, tree lines, stumps, and entry points.",
+  odorousHouseAnts:"Odorous house ants: Focus on foraging trails, entry points, kitchens, bathrooms, and exterior foundation edges.",
+  pavementAnts:"Pavement ants: Focus on cracks in sidewalks, driveways, foundations, patios, and expansion joints.",
+  carpenterBees:"Carpenter bees: Treat active galleries, eaves, fascia boards, deck rails, fences, and exposed unfinished wood.",
+  yellowjackets:"Yellowjackets: Focus on ground nests, landscape voids, wall voids, and exterior congregation areas.",
+  houseFlies:"House flies: Focus on sanitation, entry points, trash areas, and breeding sources.",
+  drainFlies:"Drain flies: Focus on drain biofilm, floor drains, mop sinks, and moisture sources.",
+  germanRoaches:"German roaches: Focus on kitchens, appliances, cabinets, voids, plumbing penetrations, and harborage cracks.",
+  americanRoaches:"American roaches: Focus on basements, crawlspaces, floor drains, utility rooms, and sewer-associated areas.",
+  smokybrownRoaches:"Smokybrown roaches: Focus on attics, gutters, mulch, crawlspaces, tree lines, and exterior harborage.",
+  mice:"Mice: Focus on exclusion, entry points, utility penetrations, garages, attics, crawlspaces, and monitoring stations.",
+  rats:"Rats: Focus on exclusion, burrows, crawlspaces, utility lines, attics, and exterior food sources."
+};
+
 const PRESETS=[
-  {name:"Select Preset",product:"",target:0},
-  {name:"Interior General Pest - Alpine WSG",product:"Alpine WSG",target:1},
-  {name:"Interior Ants - Alpine WSG",product:"Alpine WSG",target:1},
-  {name:"Heavy Ant Pressure - Alpine WSG",product:"Alpine WSG",target:2},
-  {name:"Exterior General Pest - CrossCheck Plus",product:"CrossCheck Plus",target:1},
-  {name:"Heavy Exterior Ants - CrossCheck Plus",product:"CrossCheck Plus",target:2},
-  {name:"Exterior General Pest - Bifen I/T",product:"Bifen I/T",target:1},
-  {name:"Mosquito Service - Bifen I/T",product:"Bifen I/T",target:2},
-  {name:"Carpenter Ant Exterior - Taurus SC",product:"Taurus SC",target:1},
-  {name:"Termite Typical - Termidor SC",product:"Termidor SC",target:1},
-  {name:"Termite Severe - Termidor HE",product:"Termidor HE",target:1},
-  {name:"Bed Bugs - CrossFire",product:"CrossFire",target:0},
-  {name:"IGR Roach / Stored Product - Gentrol IGR",product:"Gentrol IGR",target:0},
-  {name:"Carpenter Bees - Tengard SFR",product:"Tengard SFR",target:1},
-  {name:"General Pest - Demand CS",product:"Demand CS",target:1},
-  {name:"General Pest - Suspend PolyZone",product:"Suspend PolyZone",target:0}
+  {name:"Select Preset",product:"",target:0,pest:""},
+
+  {name:"Interior General Pest - Alpine WSG",product:"Alpine WSG",target:1,pest:""},
+  {name:"Heavy Interior General Pest - Alpine WSG",product:"Alpine WSG",target:2,pest:""},
+
+  {name:"Fire Ants - Bifen I/T",product:"Bifen I/T",target:2,pest:"fireAnts"},
+  {name:"Fire Ants - CrossCheck Plus",product:"CrossCheck Plus",target:2,pest:"fireAnts"},
+
+  {name:"Millipedes - Exterior Perimeter",product:"CrossCheck Plus",target:1,pest:"millipedes"},
+  {name:"Centipedes - Exterior Perimeter",product:"CrossCheck Plus",target:1,pest:"centipedes"},
+  {name:"Springtails - Moisture Areas",product:"Alpine WSG",target:1,pest:"springtails"},
+  {name:"Pillbugs / Sowbugs",product:"CrossCheck Plus",target:1,pest:"pillbugsSowbugs"},
+  {name:"Earwigs",product:"CrossCheck Plus",target:1,pest:"earwigs"},
+  {name:"Crickets",product:"CrossCheck Plus",target:1,pest:"crickets"},
+
+  {name:"Stink Bugs",product:"CrossCheck Plus",target:1,pest:"stinkBugs"},
+  {name:"Boxelder Bugs",product:"CrossCheck Plus",target:1,pest:"boxelderBugs"},
+  {name:"Asian Lady Beetles",product:"CrossCheck Plus",target:1,pest:"asianLadyBeetles"},
+  {name:"Kudzu Bugs",product:"CrossCheck Plus",target:1,pest:"kudzuBugs"},
+
+  {name:"Silverfish / Firebrats",product:"Alpine WSG",target:1,pest:"silverfish"},
+
+  {name:"Odorous House Ants",product:"Alpine WSG",target:1,pest:"odorousHouseAnts"},
+  {name:"Pavement Ants",product:"Alpine WSG",target:1,pest:"pavementAnts"},
+  {name:"Carpenter Ants Interior",product:"Alpine WSG",target:2,pest:"carpenterAnts"},
+  {name:"Carpenter Ants Exterior",product:"Taurus SC",target:1,pest:"carpenterAnts"},
+
+  {name:"Carpenter Bees",product:"Tengard SFR",target:1,pest:"carpenterBees"},
+  {name:"Yellowjackets",product:"CrossCheck Plus",target:2,pest:"yellowjackets"},
+
+  {name:"Mosquitoes",product:"Bifen I/T",target:2,pest:"mosquitoes"},
+  {name:"Fleas & Ticks",product:"Bifen I/T",target:2,pest:"fleasTicks"},
+
+  {name:"Spiders",product:"CrossCheck Plus",target:1,pest:"spiders"},
+  {name:"Wasps & Hornets",product:"CrossCheck Plus",target:2,pest:"waspsHornets"},
+
+  {name:"German Roaches",product:"Alpine WSG",target:2,pest:"germanRoaches"},
+  {name:"American Roaches",product:"Alpine WSG",target:2,pest:"americanRoaches"},
+  {name:"Smokybrown Roaches",product:"Alpine WSG",target:2,pest:"smokybrownRoaches"},
+
+  {name:"House Flies",product:"CrossCheck Plus",target:1,pest:"houseFlies"},
+  {name:"Drain Flies",product:"Alpine WSG",target:1,pest:"drainFlies"},
+
+  {name:"Mice Inspection",product:"Gentrol IGR",target:0,pest:"mice"},
+  {name:"Rat Inspection",product:"Gentrol IGR",target:0,pest:"rats"},
+
+  {name:"Bed Bugs - CrossFire",product:"CrossFire",target:0,pest:""},
+  {name:"IGR Program - Gentrol IGR",product:"Gentrol IGR",target:0,pest:""}
 ];
 
 function $(id){return document.getElementById(id)}
@@ -410,7 +479,33 @@ function lookupRate(){
   const product=$("lookupProduct").value;
   const tank=parseFloat($("lookupTank").value);
   const idx=parseInt($("lookupTarget").value);
-  if(!product){$("lookupResult").textContent="Select a product.";return;}
+
+  if(!product){
+    $("lookupResult").textContent="Select a product.";
+    return;
+  }
+
+  const p=PRODUCTS[product];
+  const t=p.targets[idx];
+  const amount=t.perGal*tank;
+
+  const preset = PRESETS[$("presetSelect").value];
+  const pestNote =
+    preset &&
+    preset.pest &&
+    PEST_GUIDES[preset.pest]
+      ? "\n\nPreset Pest Guidance:\n" + PEST_GUIDES[preset.pest]
+      : "";
+
+  $("lookupResult").innerHTML=
+`Product: ${product}
+Tank Size: ${tank} gal
+Target: ${t.name}
+
+Add: ${round(amount)} ${t.unit || p.unit}
+
+${t.finalText ? "Finished Actives: "+t.finalText+"\n\n" : ""}${p.notes}${pestNote}`;
+}
 
   const p=PRODUCTS[product];
   const t=p.targets[idx];
