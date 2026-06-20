@@ -30,7 +30,6 @@ button{border:0;background:linear-gradient(135deg,var(--blue),var(--pink));color
 .hidden{display:none}
 .good{color:var(--good);font-weight:900}.warn{color:var(--warn);font-weight:900}.bad{color:var(--bad);font-weight:900}
 .small{font-size:13px;color:var(--muted);line-height:1.35}
-.badge{display:inline-block;background:#e0f2fe;border-radius:999px;padding:4px 9px;margin:3px;font-size:12px;font-weight:900}
 </style>
 </head>
 
@@ -100,18 +99,14 @@ button{border:0;background:linear-gradient(135deg,var(--blue),var(--pink));color
     </div>
   </div>
 
-  <label>Service / Pest Preset</label>
-<select id="presetSelect" onchange="applyPreset()"></select>
+  <label>Compare Against</label>
+  <select id="aiTarget"></select>
 
-<label>Product / Material</label>
-<select id="lookupProduct" onchange="fillTargets('lookup')"></select>
+  <button onclick="calcAI()">Calculate & Check</button>
+  <div id="aiResult" class="result">Waiting...</div>
+</div>
 
-<label>Target / Label Rate</label>
-<select id="lookupTarget"></select>
-
-<button onclick="lookupRate()">Lookup Rate</button>
-<div id="lookupResult" class="result">Waiting...</div>
-</div><div id="rate" class="card hidden">
+<div id="rate" class="card hidden">
   <h2>Label Rate Calculator</h2>
 
   <label>Product / Material</label>
@@ -130,9 +125,7 @@ button{border:0;background:linear-gradient(135deg,var(--blue),var(--pink));color
 
   <button onclick="calcRate()">Calculate Product Amount</button>
   <div id="rateResult" class="result">Waiting...</div>
-</div>
-
-<div id="refill" class="card hidden">
+</div><div id="refill" class="card hidden">
   <h2>Refill Calculator</h2>
 
   <label>Product / Material</label>
@@ -182,7 +175,6 @@ const PRODUCTS={
     ],
     notes:"Non-repellent dinotefuran. Common field range is 10–30 g per finished gallon."
   },
-
   "CrossCheck Plus":{
     ai:7.9,form:"liquid",unit:"floz",
     targets:[
@@ -192,7 +184,6 @@ const PRODUCTS={
     ],
     notes:"7.9% bifenthrin style rate-check. Common range 0.02–0.06%."
   },
-
   "Bifen I/T":{
     ai:7.9,form:"liquid",unit:"floz",
     targets:[
@@ -202,7 +193,6 @@ const PRODUCTS={
     ],
     notes:"7.9% bifenthrin. Common suspension range 0.02–0.06%."
   },
-
   "Talstar P":{
     ai:7.9,form:"liquid",unit:"floz",
     targets:[
@@ -212,7 +202,6 @@ const PRODUCTS={
     ],
     notes:"Bifenthrin 7.9% product. Common range 0.02–0.06%."
   },
-
   "Taurus SC":{
     ai:9.1,form:"liquid",unit:"floz",
     targets:[
@@ -223,7 +212,6 @@ const PRODUCTS={
     ],
     notes:"Fipronil 9.1%. Exterior perimeter and termite use patterns differ."
   },
-
   "Termidor SC":{
     ai:9.1,form:"liquid",unit:"floz",
     targets:[
@@ -234,7 +222,6 @@ const PRODUCTS={
     ],
     notes:"Fipronil 9.1%. 0.8 fl oz/gal = 0.06%; 1.6 fl oz/gal = 0.125%."
   },
-
   "Termidor HE":{
     ai:9.1,form:"liquid",unit:"floz",
     targets:[
@@ -243,7 +230,6 @@ const PRODUCTS={
     ],
     notes:"Corrected: 1.6 fl oz/gal is on-label for 0.125% finished dilution."
   },
-
   "Cyzmic CS":{
     ai:9.7,form:"liquid",unit:"floz",
     targets:[
@@ -253,7 +239,6 @@ const PRODUCTS={
     ],
     notes:"Lambda-cyhalothrin 9.7% CS-style rate check."
   },
-
   "Demand CS":{
     ai:9.7,form:"liquid",unit:"floz",
     targets:[
@@ -261,7 +246,8 @@ const PRODUCTS={
       {name:"0.03% General Pest / Exterior",type:"ai",rate:0.03,perGal:0.40}
     ],
     notes:"Demand CS label commonly lists 0.015–0.03% for many listed pests."
-  },  "Suspend PolyZone":{
+  },
+  "Suspend PolyZone":{
     ai:4.75,form:"liquid",unit:"floz",
     targets:[
       {name:"0.03% General Pest",type:"ai",rate:0.03,perGal:0.75},
@@ -269,7 +255,6 @@ const PRODUCTS={
     ],
     notes:"Deltamethrin 4.75%. 0.75 fl oz/gal = 0.03%; 1.5 fl oz/gal = 0.06%."
   },
-
   "Tengard SFR":{
     ai:36.8,form:"liquid",unit:"floz",
     targets:[
@@ -278,7 +263,6 @@ const PRODUCTS={
     ],
     notes:"Permethrin product. Use exact label for pest/site."
   },
-
   "CrossFire":{
     ai:null,form:"fixed",unit:"floz",
     targets:[
@@ -286,7 +270,6 @@ const PRODUCTS={
     ],
     notes:"Do not compare by generic AI range. CrossFire is fixed at 13 fl oz per finished gallon."
   },
-
   "Gentrol IGR":{
     ai:9,form:"fixed",unit:"floz",
     targets:[
@@ -294,7 +277,6 @@ const PRODUCTS={
     ],
     notes:"Use 1 fl oz Gentrol IGR per gallon of diluent. Check by label dilution, not AI range."
   },
-
   "Gentrol Complete EC3":{
     ai:null,form:"fixed",unit:"floz",
     targets:[
@@ -303,86 +285,71 @@ const PRODUCTS={
     ],
     notes:"Multi-rate product. Check by fl oz/gal."
   }
-};
-
-const PEST_GUIDES = {
-  fireAnts:"Fire ants: Bait-first or two-step management is usually best. Treat active mounds when needed. For liquid yard/perimeter support, use products specifically labeled for fire ants.",
+};const PEST_GUIDES={
+  fireAnts:"Fire ants: Bait-first or two-step treatment is usually best. Treat active mounds when needed. For liquid support, use products specifically labeled for fire ants.",
   millipedes:"Millipedes: Moisture pest. Focus on mulch, leaf litter, foundation cracks, thresholds, garages, crawlspace entries, and damp shaded areas.",
   centipedes:"Centipedes: Usually indicate moisture and insect prey. Focus on cracks, garages, crawlspace entries, foundations, and harborage areas.",
   stinkBugs:"Stink bugs: Overwintering invader. Focus around windows, doors, siding gaps, soffits, attic vents, and sunny walls before fall entry.",
-  boxelderBugs:"Boxelder bugs: Overwintering nuisance pest. Focus on sunny walls, windows, doors, utility penetrations, and exterior congregation sites.",
+  boxelderBugs:"Boxelder bugs: Overwintering nuisance pest. Focus on sunny walls, windows, doors, utility penetrations, and congregation sites.",
   springtails:"Springtails: Moisture pest. Correct moisture first. Treat damp mulch, slab edges, drains, crawlspaces, bathrooms, basements, and entry points.",
   pillbugsSowbugs:"Pillbugs/sowbugs: Moisture pests. Focus on mulch, leaf litter, foundation edges, garages, crawlspaces, and damp areas.",
-  earwigs:"Earwigs: Moisture and harborage pest. Treat mulch beds, foundation cracks, crawlspace entries, garages, and shaded areas.",
+  earwigs:"Earwigs: Moisture and harborage pest. Treat mulch beds, foundation cracks, garages, crawlspace entries, and shaded areas.",
   crickets:"Crickets: Focus on garages, crawlspaces, basements, utility penetrations, and dark harborage areas.",
   silverfish:"Silverfish/firebrats: Treat cracks, voids, plumbing penetrations, bathrooms, attics, storage areas, and baseboards.",
   asianLadyBeetles:"Asian lady beetles: Overwintering invader. Focus on sunny walls, soffits, windows, doors, and siding gaps.",
-  kudzuBugs:"Kudzu bugs: Occasional southeastern invader. Focus on windows, soffits, doors, and sunny walls.",
+  kudzuBugs:"Kudzu bugs: Southeastern occasional invader. Focus on windows, soffits, doors, and sunny walls.",
   fleasTicks:"Fleas/ticks: Focus on pet resting areas, shaded lawn edges, crawlspace entries, and transition zones.",
   spiders:"Spiders: De-web first. Focus on eaves, corners, lights, garages, crawlspaces, basements, and harborage cracks.",
   waspsHornets:"Wasps/hornets: Focus on eaves, soffits, porch ceilings, roof returns, and active nest sites.",
   mosquitoes:"Mosquitoes: Focus on vegetation, shaded resting sites, under decks, and standing-water sources.",
   carpenterAnts:"Carpenter ants: Focus on moisture-damaged wood, trails, foundations, tree lines, stumps, and entry points.",
-  odorousHouseAnts:"Odorous house ants: Focus on foraging trails, entry points, kitchens, bathrooms, and exterior foundation edges.",
-  pavementAnts:"Pavement ants: Focus on cracks in sidewalks, driveways, foundations, patios, and expansion joints.",
+  odorousHouseAnts:"Odorous house ants: Focus on foraging trails, kitchens, bathrooms, entry points, and exterior foundation edges.",
+  pavementAnts:"Pavement ants: Focus on sidewalk cracks, driveways, foundations, patios, and expansion joints.",
   carpenterBees:"Carpenter bees: Treat active galleries, eaves, fascia boards, deck rails, fences, and exposed unfinished wood.",
   yellowjackets:"Yellowjackets: Focus on ground nests, landscape voids, wall voids, and exterior congregation areas.",
-  houseFlies:"House flies: Focus on sanitation, entry points, trash areas, and breeding sources.",
-  drainFlies:"Drain flies: Focus on drain biofilm, floor drains, mop sinks, and moisture sources.",
   germanRoaches:"German roaches: Focus on kitchens, appliances, cabinets, voids, plumbing penetrations, and harborage cracks.",
   americanRoaches:"American roaches: Focus on basements, crawlspaces, floor drains, utility rooms, and sewer-associated areas.",
   smokybrownRoaches:"Smokybrown roaches: Focus on attics, gutters, mulch, crawlspaces, tree lines, and exterior harborage.",
+  houseFlies:"House flies: Focus on sanitation, entry points, trash areas, and breeding sources.",
+  drainFlies:"Drain flies: Focus on drain biofilm, floor drains, mop sinks, and moisture sources.",
   mice:"Mice: Focus on exclusion, entry points, utility penetrations, garages, attics, crawlspaces, and monitoring stations.",
   rats:"Rats: Focus on exclusion, burrows, crawlspaces, utility lines, attics, and exterior food sources."
 };
 
 const PRESETS=[
   {name:"Select Preset",product:"",target:0,pest:""},
-
   {name:"Interior General Pest - Alpine WSG",product:"Alpine WSG",target:1,pest:""},
   {name:"Heavy Interior General Pest - Alpine WSG",product:"Alpine WSG",target:2,pest:""},
-
   {name:"Fire Ants - Bifen I/T",product:"Bifen I/T",target:2,pest:"fireAnts"},
   {name:"Fire Ants - CrossCheck Plus",product:"CrossCheck Plus",target:2,pest:"fireAnts"},
-
   {name:"Millipedes - Exterior Perimeter",product:"CrossCheck Plus",target:1,pest:"millipedes"},
   {name:"Centipedes - Exterior Perimeter",product:"CrossCheck Plus",target:1,pest:"centipedes"},
   {name:"Springtails - Moisture Areas",product:"Alpine WSG",target:1,pest:"springtails"},
   {name:"Pillbugs / Sowbugs",product:"CrossCheck Plus",target:1,pest:"pillbugsSowbugs"},
   {name:"Earwigs",product:"CrossCheck Plus",target:1,pest:"earwigs"},
   {name:"Crickets",product:"CrossCheck Plus",target:1,pest:"crickets"},
-
   {name:"Stink Bugs",product:"CrossCheck Plus",target:1,pest:"stinkBugs"},
   {name:"Boxelder Bugs",product:"CrossCheck Plus",target:1,pest:"boxelderBugs"},
   {name:"Asian Lady Beetles",product:"CrossCheck Plus",target:1,pest:"asianLadyBeetles"},
   {name:"Kudzu Bugs",product:"CrossCheck Plus",target:1,pest:"kudzuBugs"},
-
   {name:"Silverfish / Firebrats",product:"Alpine WSG",target:1,pest:"silverfish"},
-
   {name:"Odorous House Ants",product:"Alpine WSG",target:1,pest:"odorousHouseAnts"},
   {name:"Pavement Ants",product:"Alpine WSG",target:1,pest:"pavementAnts"},
   {name:"Carpenter Ants Interior",product:"Alpine WSG",target:2,pest:"carpenterAnts"},
   {name:"Carpenter Ants Exterior",product:"Taurus SC",target:1,pest:"carpenterAnts"},
-
   {name:"Carpenter Bees",product:"Tengard SFR",target:1,pest:"carpenterBees"},
   {name:"Yellowjackets",product:"CrossCheck Plus",target:2,pest:"yellowjackets"},
-
   {name:"Mosquitoes",product:"Bifen I/T",target:2,pest:"mosquitoes"},
   {name:"Fleas & Ticks",product:"Bifen I/T",target:2,pest:"fleasTicks"},
-
   {name:"Spiders",product:"CrossCheck Plus",target:1,pest:"spiders"},
   {name:"Wasps & Hornets",product:"CrossCheck Plus",target:2,pest:"waspsHornets"},
-
   {name:"German Roaches",product:"Alpine WSG",target:2,pest:"germanRoaches"},
   {name:"American Roaches",product:"Alpine WSG",target:2,pest:"americanRoaches"},
   {name:"Smokybrown Roaches",product:"Alpine WSG",target:2,pest:"smokybrownRoaches"},
-
   {name:"House Flies",product:"CrossCheck Plus",target:1,pest:"houseFlies"},
   {name:"Drain Flies",product:"Alpine WSG",target:1,pest:"drainFlies"},
-
   {name:"Mice Inspection",product:"Gentrol IGR",target:0,pest:"mice"},
   {name:"Rat Inspection",product:"Gentrol IGR",target:0,pest:"rats"},
-
   {name:"Bed Bugs - CrossFire",product:"CrossFire",target:0,pest:""},
   {name:"IGR Program - Gentrol IGR",product:"Gentrol IGR",target:0,pest:""}
 ];
@@ -398,14 +365,19 @@ function showTab(id,el){
 
 function init(){
   const productNames=Object.keys(PRODUCTS);
+
   ["lookupProduct","aiProduct","rateProduct","refillProduct"].forEach(id=>{
     const s=$(id);
+    if(!s)return;
     s.innerHTML='<option value="">Select Product</option>';
     productNames.forEach(p=>s.innerHTML+=`<option value="${p}">${p}</option>`);
   });
 
-  $("presetSelect").innerHTML="";
-  PRESETS.forEach((p,i)=>$("presetSelect").innerHTML+=`<option value="${i}">${p.name}</option>`);
+  const presetBox=$("presetSelect");
+  if(presetBox){
+    presetBox.innerHTML="";
+    PRESETS.forEach((p,i)=>presetBox.innerHTML+=`<option value="${i}">${p.name}</option>`);
+  }
 
   fillTargets("lookup");
   fillTargets("ai");
@@ -413,34 +385,47 @@ function init(){
 }
 
 function fillTargets(prefix){
-  const product=$(prefix+"Product").value;
+  const productBox=$(prefix+"Product");
   const targetSelect=$(prefix+"Target");
-  if(!targetSelect)return;
+  if(!productBox || !targetSelect)return;
+
+  const product=productBox.value;
   targetSelect.innerHTML="";
+
   if(!product || !PRODUCTS[product]){
     targetSelect.innerHTML='<option value="">Select Product First</option>';
     return;
   }
+
   PRODUCTS[product].targets.forEach((t,i)=>{
     targetSelect.innerHTML+=`<option value="${i}">${t.name}</option>`;
   });
 }
 
 function applyPreset(){
-  const p=PRESETS[$("presetSelect").value];
+  const presetBox=$("presetSelect");
+  if(!presetBox)return;
+
+  const p=PRESETS[presetBox.value];
   if(!p || !p.product)return;
 
-  $("lookupProduct").value=p.product;
-  fillTargets("lookup");
-  $("lookupTarget").value=p.target;
+  if($("lookupProduct")){
+    $("lookupProduct").value=p.product;
+    fillTargets("lookup");
+    if($("lookupTarget"))$("lookupTarget").value=p.target;
+  }
 
-  $("aiProduct").value=p.product;
-  fillTargets("ai");
-  $("aiTarget").value=p.target;
+  if($("aiProduct")){
+    $("aiProduct").value=p.product;
+    fillTargets("ai");
+    if($("aiTarget"))$("aiTarget").value=p.target;
+  }
 
-  $("rateProduct").value=p.product;
-  fillTargets("rate");
-  $("rateTarget").value=p.target;
+  if($("rateProduct")){
+    $("rateProduct").value=p.product;
+    fillTargets("rate");
+    if($("rateTarget"))$("rateTarget").value=p.target;
+  }
 }
 
 function liquidAI(amountFloz,gallons,aiPercent){
@@ -478,7 +463,7 @@ function checkStatus(actual,target){
 function lookupRate(){
   const product=$("lookupProduct").value;
   const tank=parseFloat($("lookupTank").value);
-  const idx=parseInt($("lookupTarget").value);
+  const idx=parseInt($("lookupTarget").value || 0);
 
   if(!product){
     $("lookupResult").textContent="Select a product.";
@@ -486,14 +471,14 @@ function lookupRate(){
   }
 
   const p=PRODUCTS[product];
-  const t=p.targets[idx];
+  const t=p.targets[idx] || p.targets[0];
   const amount=t.perGal*tank;
 
-  const preset = PRESETS[$("presetSelect").value];
+  const presetBox=$("presetSelect");
+  const preset=presetBox ? PRESETS[presetBox.value] : null;
+
   const pestNote =
-    preset &&
-    preset.pest &&
-    PEST_GUIDES[preset.pest]
+    preset && preset.pest && PEST_GUIDES[preset.pest]
       ? "\n\nPreset Pest Guidance:\n" + PEST_GUIDES[preset.pest]
       : "";
 
@@ -507,27 +492,18 @@ Add: ${round(amount)} ${t.unit || p.unit}
 ${t.finalText ? "Finished Actives: "+t.finalText+"\n\n" : ""}${p.notes}${pestNote}`;
 }
 
-  const p=PRODUCTS[product];
-  const t=p.targets[idx];
-  const amount=t.perGal*tank;
-
-  $("lookupResult").innerHTML=
-`Product: ${product}
-Tank Size: ${tank} gal
-Target: ${t.name}
-
-Add: ${round(amount)} ${t.unit || p.unit}
-
-${t.finalText ? "Finished Actives: "+t.finalText+"\n\n" : ""}${p.notes}`;
-}
-
 function calcRate(){
   const product=$("rateProduct").value;
   const tank=parseFloat($("rateTank").value);
-  const idx=parseInt($("rateTarget").value);
-  if(!product){$("rateResult").textContent="Select a product.";return;}
+  const idx=parseInt($("rateTarget").value || 0);
 
-  const p=PRODUCTS[product], t=p.targets[idx];
+  if(!product){
+    $("rateResult").textContent="Select a product.";
+    return;
+  }
+
+  const p=PRODUCTS[product];
+  const t=p.targets[idx] || p.targets[0];
   const amount=t.perGal*tank;
 
   $("rateResult").innerHTML=
@@ -547,11 +523,15 @@ function calcAI(){
   const amount=parseFloat($("amount").value);
   const unit=$("unit").value;
   const gallons=parseFloat($("gallons").value);
-  const idx=parseInt($("aiTarget").value);
+  const idx=parseInt($("aiTarget").value || 0);
 
-  if(!product || !amount || !gallons){$("aiResult").textContent="Fill out product, amount, and gallons.";return;}
+  if(!product || !amount || !gallons){
+    $("aiResult").textContent="Fill out product, amount, and gallons.";
+    return;
+  }
 
-  const p=PRODUCTS[product], t=p.targets[idx];
+  const p=PRODUCTS[product];
+  const t=p.targets[idx] || p.targets[0];
 
   if(t.type==="fixed"){
     const perGal=amount/gallons;
