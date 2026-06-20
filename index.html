@@ -1,589 +1,533 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Pest Tech Calc Pro</title>
 
 <style>
-body{
-  margin:0;
-  background:#eef3f8;
-  font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+:root{
+  --blue:#0ea5e9;--pink:#ec4899;--purple:#7c3aed;
+  --bg:#eef6ff;--card:#fff;--text:#111827;--muted:#6b7280;
+  --border:#dbeafe;--good:#16a34a;--warn:#f59e0b;--bad:#dc2626;
 }
-.header{
-  background:linear-gradient(90deg,#0ea5e9,#ec4aa5);
-  color:white;
-  padding:28px 18px;
-}
-.header h1{
-  margin:0;
-  font-size:24px;
-}
-.header p{
-  margin:8px 0 0;
-}
-.wrap{
-  padding:16px;
-  max-width:800px;
-  margin:auto;
-}
-.tabs{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:8px;
-  margin-bottom:14px;
-}
-.tab{
-  border:2px solid #d9e3ef;
-  border-radius:14px;
-  padding:12px 6px;
-  font-weight:800;
-  background:white;
-  color:#1976ff;
-}
-.tab.active{
-  background:linear-gradient(90deg,#7c3aed,#ec4aa5);
-  color:white;
-}
-.card{
-  background:white;
-  border-radius:22px;
-  padding:18px;
-  border:1px solid #d9e3ef;
-}
-.hidden{
-  display:none;
-}
-label{
-  display:block;
-  font-weight:800;
-  margin-top:15px;
-  margin-bottom:7px;
-}
-select,input{
-  width:100%;
-  padding:14px;
-  border-radius:14px;
-  border:none;
-  background:#edf2f7;
-  font-size:18px;
-  box-sizing:border-box;
-}
-.grid4{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:8px;
-}
-.choice{
-  border:none;
-  padding:13px 6px;
-  border-radius:14px;
-  font-weight:800;
-  background:#ececec;
-  color:#1976ff;
-}
-.choice.active{
-  background:linear-gradient(90deg,#7c3aed,#ec4aa5);
-  color:white;
-}
-.calcBtn{
-  width:100%;
-  margin-top:18px;
-  border:none;
-  padding:16px;
-  border-radius:16px;
-  background:#0ea5e9;
-  color:white;
-  font-size:18px;
-  font-weight:800;
-}
-.result{
-  margin-top:18px;
-  padding:18px;
-  border-radius:18px;
-  background:#edf7ff;
-  font-size:20px;
-  font-weight:800;
-  line-height:1.45;
-}
-.good{
-  background:#dcfce7;
-}
-.warn{
-  background:#fef9c3;
-}
-.bad{
-  background:#fee2e2;
-}
-.note{
-  font-size:14px;
-  color:#475569;
-  margin-top:10px;
-  line-height:1.35;
-}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text)}
+.header{background:linear-gradient(135deg,var(--blue),var(--pink));color:white;padding:26px 18px}
+.header h1{margin:0;font-size:26px}.header p{margin:8px 0 0;font-size:14px}
+.wrap{max-width:900px;margin:auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px;margin-bottom:16px;box-shadow:0 8px 20px rgba(15,23,42,.06)}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.tab{background:white;border:1px solid var(--border);border-radius:14px;padding:11px 6px;text-align:center;font-weight:800}
+.tab.active{background:linear-gradient(135deg,var(--purple),var(--pink));color:white}
+h2{margin:0 0 12px;font-size:20px}
+label{display:block;font-weight:800;margin:12px 0 6px}
+input,select,textarea,button{width:100%;font-size:17px;padding:12px;border-radius:12px;border:1px solid var(--border);font-family:inherit}
+button{border:0;background:linear-gradient(135deg,var(--blue),var(--pink));color:white;font-weight:900;margin-top:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.result{background:#f8fbff;border:1px solid var(--border);border-radius:14px;padding:14px;white-space:pre-wrap;line-height:1.45;margin-top:12px}
+.hidden{display:none}
+.good{color:var(--good);font-weight:900}.warn{color:var(--warn);font-weight:900}.bad{color:var(--bad);font-weight:900}
+.small{font-size:13px;color:var(--muted);line-height:1.35}
+.badge{display:inline-block;background:#e0f2fe;border-radius:999px;padding:4px 9px;margin:3px;font-size:12px;font-weight:900}
 </style>
 </head>
 
 <body>
-
 <div class="header">
-<h1>Pest Tech Calc Pro</h1>
-<p>Active Ingredient %, Label Rate Check, Lookup, Refill Math</p>
+  <h1>Pest Tech Calc Pro</h1>
+  <p>AI %, label-rate checks, refill math, and pest/service presets</p>
 </div>
 
 <div class="wrap">
 
 <div class="tabs">
-<button class="tab active" onclick="showTab('lookup',this)">Lookup</button>
-<button class="tab" onclick="showTab('mix',this)">AI %</button>
-<button class="tab" onclick="showTab('rate',this)">Rate</button>
-<button class="tab" onclick="showTab('refill',this)">Refill</button>
+  <div class="tab active" onclick="showTab('lookup',this)">Lookup</div>
+  <div class="tab" onclick="showTab('ai',this)">AI %</div>
+  <div class="tab" onclick="showTab('rate',this)">Rate</div>
+  <div class="tab" onclick="showTab('refill',this)">Refill</div>
+</div>
+
+<div id="lookup" class="card">
+  <h2>Quick Field Lookup</h2>
+
+  <label>Service / Pest Preset</label>
+  <select id="presetSelect" onchange="applyPreset()"></select>
+
+  <label>Tank Size</label>
+  <select id="lookupTank">
+    <option value="1">1 Gal</option>
+    <option value="2.5">2.5 Gal</option>
+    <option value="5">5 Gal</option>
+    <option value="10">10 Gal</option>
+  </select>
+
+  <label>Product / Material</label>
+  <select id="lookupProduct" onchange="fillTargets('lookup')"></select>
+
+  <label>Target / Label Rate</label>
+  <select id="lookupTarget"></select>
+
+  <button onclick="lookupRate()">Lookup Rate</button>
+  <div id="lookupResult" class="result">Waiting...</div>
+  <p class="small">Always follow the product label in your possession. This calculator is a field helper, not a replacement for the label.</p>
+</div>
+
+<div id="ai" class="card hidden">
+  <h2>Finished Active Ingredient %</h2>
+
+  <label>Product / Material</label>
+  <select id="aiProduct" onchange="fillTargets('ai')"></select>
+
+  <div class="grid3">
+    <div>
+      <label>Amount Added</label>
+      <input id="amount" type="number" step="0.001" placeholder="3">
+    </div>
+    <div>
+      <label>Unit</label>
+      <select id="unit">
+        <option value="floz">fl oz</option>
+        <option value="g">g</option>
+        <option value="ml">ml</option>
+        <option value="ozwt">oz weight</option>
+      </select>
+    </div>
+    <div>
+      <label>Total Finished Gal</label>
+      <input id="gallons" type="number" step="0.001" placeholder="2.5">
+    </div>
+  </div>
+
+  <label>Compare Against</label>
+  <select id="aiTarget"></select>
+
+  <button onclick="calcAI()">Calculate & Check</button>
+  <div id="aiResult" class="result">Waiting...</div>
+</div><div id="rate" class="card hidden">
+  <h2>Label Rate Calculator</h2>
+
+  <label>Product / Material</label>
+  <select id="rateProduct" onchange="fillTargets('rate')"></select>
+
+  <label>Tank Size</label>
+  <select id="rateTank">
+    <option value="1">1 Gallon</option>
+    <option value="2.5">2.5 Gallons</option>
+    <option value="5">5 Gallons</option>
+    <option value="10">10 Gallons</option>
+  </select>
+
+  <label>Target / Label Rate</label>
+  <select id="rateTarget"></select>
+
+  <button onclick="calcRate()">Calculate Product Amount</button>
+  <div id="rateResult" class="result">Waiting...</div>
+</div>
+
+<div id="refill" class="card hidden">
+  <h2>Refill Calculator</h2>
+
+  <label>Product / Material</label>
+  <select id="refillProduct"></select>
+
+  <div class="grid3">
+    <div>
+      <label>Original Product</label>
+      <input id="origAmount" type="number" step="0.001" placeholder="3">
+    </div>
+    <div>
+      <label>Original Gal</label>
+      <input id="origGallons" type="number" step="0.001" placeholder="2.5">
+    </div>
+    <div>
+      <label>Gal Added</label>
+      <input id="addGallons" type="number" step="0.001" placeholder="1.25">
+    </div>
+  </div>
+
+  <button onclick="calcRefill()">Calculate Refill</button>
+  <div id="refillResult" class="result">Waiting...</div>
 </div>
 
 <div class="card">
-
-<div id="lookupTab">
-<h2>Quick Label Lookup</h2>
-
-<label>Tank Size</label>
-<div class="grid4">
-<button class="choice tank active" onclick="setTank(1,this)">1 Gal</button>
-<button class="choice tank" onclick="setTank(2.5,this)">2.5 Gal</button>
-<button class="choice tank" onclick="setTank(5,this)">5 Gal</button>
-<button class="choice tank" onclick="setTank(10,this)">10 Gal</button>
+  <h2>Verified Database Notes</h2>
+  <div class="small">
+    Alpine WSG: 10–30 g/gal depending pest pressure.  
+    Termidor HE: 0.8 fl oz/gal = 0.06%; 1.6 fl oz/gal = 0.125%.  
+    Termidor SC/Taurus SC: fipronil rates vary by use pattern.  
+    CrossFire: fixed 13 fl oz/gal.  
+    Gentrol IGR: check by fl oz/gal, not AI %.  
+    Bifenthrin 7.9% products: usually 0.02–0.06% finished dilution.
+  </div>
 </div>
 
-<label>Product / Material</label>
-<select id="lookupProduct" onchange="updateLookup()"></select>
-
-<div class="result" id="lookupResult">Select Product</div>
-<div class="note">
-Always follow the actual product label. This is a quick field helper, not a label replacement.
-</div>
-</div>
-
-<div id="mixTab" class="hidden">
-<h2>Finished Active Ingredient %</h2>
-
-<label>Product</label>
-<select id="mixProduct"></select>
-
-<label>Amount Added</label>
-<input id="mixAmount" type="number" placeholder="Example: 13">
-
-<label>Unit</label>
-<div class="grid4">
-<button class="choice unit active" onclick="setUnit('floz',this)">fl oz</button>
-<button class="choice unit" onclick="setUnit('g',this)">g</button>
-<button class="choice unit" onclick="setUnit('ml',this)">ml</button>
-<button class="choice unit" onclick="setUnit('oz',this)">oz</button>
-</div>
-
-<label>Total Finished Gallons</label>
-<input id="mixGallons" type="number" value="1">
-
-<button class="calcBtn" onclick="calcMix()">
-Calculate & Check Rate
-</button>
-
-<div class="result" id="mixResult">Waiting...</div>
-</div>
-
-<div id="rateTab" class="hidden">
-<h2>Label Rate Calculator</h2>
-
-<label>Product / Material</label>
-<select id="rateProduct"></select>
-
-<label>Tank Size</label>
-<select id="rateTank">
-<option value="1">1 Gallon</option>
-<option value="2.5">2.5 Gallons</option>
-<option value="5">5 Gallons</option>
-<option value="10">10 Gallons</option>
-</select>
-
-<button class="calcBtn" onclick="lookupRate()">
-Lookup Rate
-</button>
-
-<div class="result" id="rateResult">Waiting...</div>
-</div>
-
-<div id="refillTab" class="hidden">
-<h2>Refill Calculator</h2>
-
-<label>Original Product Amount</label>
-<input id="origAmount" type="number" placeholder="Example: 3">
-
-<label>Original Tank Size</label>
-<input id="origTank" type="number" placeholder="Example: 2.5">
-
-<label>Gallons Being Added</label>
-<input id="added" type="number" placeholder="Example: 1.25">
-
-<button class="calcBtn" onclick="calcRefill()">
-Calculate Refill
-</button>
-
-<div class="result" id="refillResult">Waiting...</div>
-</div>
-
-</div>
 </div>
 
 <script>
+const PRODUCTS={
+  "Alpine WSG":{
+    ai:40,form:"dry",unit:"g",
+    targets:[
+      {name:"Maintenance / Light General Pest",type:"amount",perGal:10,unit:"g",aiRate:0.105},
+      {name:"General Pest / Ants",type:"amount",perGal:20,unit:"g",aiRate:0.211},
+      {name:"Heavy Pest Pressure / Cleanout",type:"amount",perGal:30,unit:"g",aiRate:0.317}
+    ],
+    notes:"Non-repellent dinotefuran. Common field range is 10–30 g per finished gallon."
+  },
 
-let currentTank = 1;
-let currentUnit = "floz";
+  "CrossCheck Plus":{
+    ai:7.9,form:"liquid",unit:"floz",
+    targets:[
+      {name:"0.02% Light General Pest",type:"ai",rate:0.02,perGal:0.33},
+      {name:"0.03% General Exterior",type:"ai",rate:0.03,perGal:0.50},
+      {name:"0.06% Heavy Exterior / Ants",type:"ai",rate:0.06,perGal:1.00}
+    ],
+    notes:"7.9% bifenthrin style rate-check. Common range 0.02–0.06%."
+  },
 
-const PRODUCTS = {
-    "CrossFire": {unit:"fl oz",ai:14.1,rateMin:13,rateMax:13,rateRec:13,note:"Label helper: 13 fl oz per 1 finished gallon."},
-  "Alpine WSG": {unit:"g",ai:40,rateMin:10,rateMax:30,rateRec:30,note:"Label helper range: 10g, 20g, or 30g per finished gallon depending pest/use."},
-  "CrossCheck Plus": {unit:"fl oz",ai:7.9,rateMin:0.33,rateMax:1,rateRec:1,note:"7.9% bifenthrin helper range: 0.33–1 fl oz per gallon."},
-  "Bifen I/T": {unit:"fl oz",ai:7.9,rateMin:0.33,rateMax:1,rateRec:1,note:"7.9% bifenthrin helper range: 0.33–1 fl oz per gallon."},
-  "Bifen XTS": {unit:"fl oz",ai:25.1,rateMin:0.13,rateMax:0.32,rateRec:0.32,note:"25.1% bifenthrin helper range for approx. 0.02%–0.06% finished dilution."},
-  "Taurus SC": {unit:"fl oz",ai:9.1,rateMin:0.4,rateMax:0.8,rateRec:0.8,note:"Label helper: 0.4 fl oz/gal = 0.03%; 0.8 fl oz/gal = 0.06%."},
-  "Termidor SC": {unit:"fl oz",ai:9.1,rateMin:0.4,rateMax:0.8,rateRec:0.8,note:"Label helper: 0.4 fl oz/gal = 0.03%; 0.8 fl oz/gal = 0.06%."},
-  "Termidor HE": {unit:"fl oz",ai:8.73,rateMin:0.8,rateMax:0.8,rateRec:0.8,note:"Termite product. Follow HE label application-volume rules."},
-  "Gentrol IGR": {unit:"fl oz",ai:9,rateMin:1,rateMax:1,rateRec:1,note:"Hydroprene IGR helper rate: 1 fl oz per gallon."},
-  "Gentrol Complete EC3": {unit:"fl oz",ai:3,rateMin:1.3,rateMax:1.3,rateRec:1.3,note:"Adulticide + IGR. Confirm exact label directions."},
-  "Cyzmic CS": {unit:"fl oz",ai:9.7,rateMin:0.2,rateMax:0.8,rateRec:0.8,note:"Lambda-cyhalothrin helper range. Confirm pest/site label."},
+  "Bifen I/T":{
+    ai:7.9,form:"liquid",unit:"floz",
+    targets:[
+      {name:"0.02% Light General Pest",type:"ai",rate:0.02,perGal:0.33},
+      {name:"0.03% General Exterior",type:"ai",rate:0.03,perGal:0.50},
+      {name:"0.06% Heavy Exterior / Mosquito / Ants",type:"ai",rate:0.06,perGal:1.00}
+    ],
+    notes:"7.9% bifenthrin. Common suspension range 0.02–0.06%."
+  },
 
-  "Niban Granules": {unit:"manual",ai:0,note:"Granular bait. Apply by label, not tank mix."},
-  "Niban FG": {unit:"manual",ai:0,note:"Granular bait. Apply by label, not tank mix."},
-  "Final Bait Blox": {unit:"manual",ai:0,note:"Rodent bait. Use per label and station rules."},
-  "Rodent Bait Stations": {unit:"manual",ai:0,note:"Material item, not a mix product."},
-  "Trelona ATBS": {unit:"manual",ai:0,note:"Termite bait system. Follow station label."},
-  "In2Mix Packets": {unit:"manual",ai:0,note:"Mosquito station packet. Use per station directions."},
-  "Mouse Sticky Traps": {unit:"manual",ai:0,note:"Trap item."},
-  "T-Rex Snap Traps": {unit:"manual",ai:0,note:"Trap item."},
-  "Tri-Die / Tri-Dust": {unit:"manual",ai:0,note:"Dust product. Apply lightly per label."},
-  "Wasp & Hornet Spray": {unit:"manual",ai:0,note:"Aerosol/RTU item. Follow can label."},
-  "Advion Ant Gel": {unit:"manual",ai:0,note:"Gel bait. Apply per label."},
-  "Advion Roach Gel": {unit:"manual",ai:0,note:"Gel bait. Apply per label."},
-  "Maxforce FC Magnum": {unit:"manual",ai:0,note:"Roach gel bait. Apply per label."},
-  "Maxforce Quantum": {unit:"manual",ai:0,note:"Ant gel bait. Apply per label."},
-  "Advance 375A": {unit:"manual",ai:0,note:"Granular ant bait. Apply per label."},
-  "Glue Boards": {unit:"manual",ai:0,note:"Monitoring/trap item."},
-  "Monitoring Stations": {unit:"manual",ai:0,note:"Monitoring item."},
-  "Copper Mesh": {unit:"manual",ai:0,note:"Exclusion material."},
-  "Door Sweeps": {unit:"manual",ai:0,note:"Exclusion material."},
-  "Exclusion Materials": {unit:"manual",ai:0,note:"Seal gaps per job needs."}
+  "Talstar P":{
+    ai:7.9,form:"liquid",unit:"floz",
+    targets:[
+      {name:"0.02% Light General Pest",type:"ai",rate:0.02,perGal:0.33},
+      {name:"0.03% General Exterior",type:"ai",rate:0.03,perGal:0.50},
+      {name:"0.06% Heavy Exterior",type:"ai",rate:0.06,perGal:1.00}
+    ],
+    notes:"Bifenthrin 7.9% product. Common range 0.02–0.06%."
+  },
+
+  "Taurus SC":{
+    ai:9.1,form:"liquid",unit:"floz",
+    targets:[
+      {name:"0.03% Exterior Perimeter",type:"ai",rate:0.03,perGal:0.40},
+      {name:"0.06% Carpenter Ant / Termite Typical",type:"ai",rate:0.06,perGal:0.80},
+      {name:"0.09% Severe Termite Situation",type:"ai",rate:0.09,perGal:1.20},
+      {name:"0.125% Severe Termite / Problem Soil",type:"ai",rate:0.125,perGal:1.60}
+    ],
+    notes:"Fipronil 9.1%. Exterior perimeter and termite use patterns differ."
+  },
+
+  "Termidor SC":{
+    ai:9.1,form:"liquid",unit:"floz",
+    targets:[
+      {name:"0.03% Exterior Perimeter",type:"ai",rate:0.03,perGal:0.40},
+      {name:"0.06% Typical Termite Dilution",type:"ai",rate:0.06,perGal:0.80},
+      {name:"0.09% Higher Termite Dilution",type:"ai",rate:0.09,perGal:1.20},
+      {name:"0.125% Severe / Problem Soil",type:"ai",rate:0.125,perGal:1.60}
+    ],
+    notes:"Fipronil 9.1%. 0.8 fl oz/gal = 0.06%; 1.6 fl oz/gal = 0.125%."
+  },
+
+  "Termidor HE":{
+    ai:9.1,form:"liquid",unit:"floz",
+    targets:[
+      {name:"0.06% HE Finished Dilution",type:"ai",rate:0.06,perGal:0.80},
+      {name:"0.125% HE Finished Dilution",type:"ai",rate:0.125,perGal:1.60}
+    ],
+    notes:"Corrected: 1.6 fl oz/gal is on-label for 0.125% finished dilution."
+  },
+
+  "Cyzmic CS":{
+    ai:9.7,form:"liquid",unit:"floz",
+    targets:[
+      {name:"0.015% Light / Maintenance",type:"ai",rate:0.015,perGal:0.20},
+      {name:"0.03% General Pest",type:"ai",rate:0.03,perGal:0.40},
+      {name:"0.06% Heavy Pest Pressure",type:"ai",rate:0.06,perGal:0.80}
+    ],
+    notes:"Lambda-cyhalothrin 9.7% CS-style rate check."
+  },
+
+  "Demand CS":{
+    ai:9.7,form:"liquid",unit:"floz",
+    targets:[
+      {name:"0.015% Light General Pest",type:"ai",rate:0.015,perGal:0.20},
+      {name:"0.03% General Pest / Exterior",type:"ai",rate:0.03,perGal:0.40}
+    ],
+    notes:"Demand CS label commonly lists 0.015–0.03% for many listed pests."
+  },  "Suspend PolyZone":{
+    ai:4.75,form:"liquid",unit:"floz",
+    targets:[
+      {name:"0.03% General Pest",type:"ai",rate:0.03,perGal:0.75},
+      {name:"0.06% Severe Infestation / Bed Bugs",type:"ai",rate:0.06,perGal:1.50}
+    ],
+    notes:"Deltamethrin 4.75%. 0.75 fl oz/gal = 0.03%; 1.5 fl oz/gal = 0.06%."
+  },
+
+  "Tengard SFR":{
+    ai:36.8,form:"liquid",unit:"floz",
+    targets:[
+      {name:"0.25% General Pest",type:"ai",rate:0.25,perGal:0.66},
+      {name:"0.50% Heavy Pest / Carpenter Bees",type:"ai",rate:0.50,perGal:1.33}
+    ],
+    notes:"Permethrin product. Use exact label for pest/site."
+  },
+
+  "CrossFire":{
+    ai:null,form:"fixed",unit:"floz",
+    targets:[
+      {name:"Bed Bug Treatment Fixed Label Rate",type:"fixed",perGal:13,unit:"floz",finalText:"Clothianidin 0.40%, Metofluthrin 0.01%, PBO 1.00%, total actives 1.42%"}
+    ],
+    notes:"Do not compare by generic AI range. CrossFire is fixed at 13 fl oz per finished gallon."
+  },
+
+  "Gentrol IGR":{
+    ai:9,form:"fixed",unit:"floz",
+    targets:[
+      {name:"General Surface IGR Rate",type:"fixed",perGal:1,unit:"floz"}
+    ],
+    notes:"Use 1 fl oz Gentrol IGR per gallon of diluent. Check by label dilution, not AI range."
+  },
+
+  "Gentrol Complete EC3":{
+    ai:null,form:"fixed",unit:"floz",
+    targets:[
+      {name:"Light / Maintenance",type:"fixed",perGal:1.3,unit:"floz"},
+      {name:"Severe Infestation",type:"fixed",perGal:5.2,unit:"floz"}
+    ],
+    notes:"Multi-rate product. Check by fl oz/gal."
+  }
 };
 
-function fillSelects(){
-  const names = Object.keys(PRODUCTS);
+const PRESETS=[
+  {name:"Select Preset",product:"",target:0},
+  {name:"Interior General Pest - Alpine WSG",product:"Alpine WSG",target:1},
+  {name:"Interior Ants - Alpine WSG",product:"Alpine WSG",target:1},
+  {name:"Heavy Ant Pressure - Alpine WSG",product:"Alpine WSG",target:2},
+  {name:"Exterior General Pest - CrossCheck Plus",product:"CrossCheck Plus",target:1},
+  {name:"Heavy Exterior Ants - CrossCheck Plus",product:"CrossCheck Plus",target:2},
+  {name:"Exterior General Pest - Bifen I/T",product:"Bifen I/T",target:1},
+  {name:"Mosquito Service - Bifen I/T",product:"Bifen I/T",target:2},
+  {name:"Carpenter Ant Exterior - Taurus SC",product:"Taurus SC",target:1},
+  {name:"Termite Typical - Termidor SC",product:"Termidor SC",target:1},
+  {name:"Termite Severe - Termidor HE",product:"Termidor HE",target:1},
+  {name:"Bed Bugs - CrossFire",product:"CrossFire",target:0},
+  {name:"IGR Roach / Stored Product - Gentrol IGR",product:"Gentrol IGR",target:0},
+  {name:"Carpenter Bees - Tengard SFR",product:"Tengard SFR",target:1},
+  {name:"General Pest - Demand CS",product:"Demand CS",target:1},
+  {name:"General Pest - Suspend PolyZone",product:"Suspend PolyZone",target:0}
+];
 
-  ["lookupProduct","mixProduct","rateProduct"].forEach(id=>{
-    const sel = document.getElementById(id);
-    sel.innerHTML = "";
+function $(id){return document.getElementById(id)}
 
-    if(id === "lookupProduct"){
-      sel.innerHTML += `<option value="">Select Product</option>`;
-    }
+function showTab(id,el){
+  ["lookup","ai","rate","refill"].forEach(x=>$(x).classList.add("hidden"));
+  $(id).classList.remove("hidden");
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  el.classList.add("active");
+}
 
-    names.forEach(name=>{
-      if(id === "mixProduct" && PRODUCTS[name].unit === "manual") return;
-      sel.innerHTML += `<option>${name}</option>`;
-    });
+function init(){
+  const productNames=Object.keys(PRODUCTS);
+  ["lookupProduct","aiProduct","rateProduct","refillProduct"].forEach(id=>{
+    const s=$(id);
+    s.innerHTML='<option value="">Select Product</option>';
+    productNames.forEach(p=>s.innerHTML+=`<option value="${p}">${p}</option>`);
+  });
+
+  $("presetSelect").innerHTML="";
+  PRESETS.forEach((p,i)=>$("presetSelect").innerHTML+=`<option value="${i}">${p.name}</option>`);
+
+  fillTargets("lookup");
+  fillTargets("ai");
+  fillTargets("rate");
+}
+
+function fillTargets(prefix){
+  const product=$(prefix+"Product").value;
+  const targetSelect=$(prefix+"Target");
+  if(!targetSelect)return;
+  targetSelect.innerHTML="";
+  if(!product || !PRODUCTS[product]){
+    targetSelect.innerHTML='<option value="">Select Product First</option>';
+    return;
+  }
+  PRODUCTS[product].targets.forEach((t,i)=>{
+    targetSelect.innerHTML+=`<option value="${i}">${t.name}</option>`;
   });
 }
 
-function showTab(tab,btn){
-  ["lookupTab","mixTab","rateTab","refillTab"].forEach(id=>{
-    document.getElementById(id).classList.add("hidden");
-  });
+function applyPreset(){
+  const p=PRESETS[$("presetSelect").value];
+  if(!p || !p.product)return;
 
-  document.getElementById(tab + "Tab").classList.remove("hidden");
+  $("lookupProduct").value=p.product;
+  fillTargets("lookup");
+  $("lookupTarget").value=p.target;
 
-  document.querySelectorAll(".tab").forEach(b=>{
-    b.classList.remove("active");
-  });
+  $("aiProduct").value=p.product;
+  fillTargets("ai");
+  $("aiTarget").value=p.target;
 
-  btn.classList.add("active");
+  $("rateProduct").value=p.product;
+  fillTargets("rate");
+  $("rateTarget").value=p.target;
 }
 
-function setTank(tank,btn){
-  currentTank = tank;
-
-  document.querySelectorAll(".tank").forEach(b=>{
-    b.classList.remove("active");
-  });
-
-  btn.classList.add("active");
-
-  updateLookup();
+function liquidAI(amountFloz,gallons,aiPercent){
+  return (amountFloz*aiPercent)/(gallons*128+amountFloz);
 }
 
-function setUnit(unit,btn){
-  currentUnit = unit;
-
-  document.querySelectorAll(".unit").forEach(b=>{
-    b.classList.remove("active");
-  });
-
-  btn.classList.add("active");
+function dryAI(grams,gallons,aiPercent){
+  const waterGrams=gallons*3785.41;
+  const aiGrams=grams*(aiPercent/100);
+  return (aiGrams/(waterGrams+grams))*100;
 }
 
-function updateLookup(){
-  const product = document.getElementById("lookupProduct").value;
-  const box = document.getElementById("lookupResult");
+function amountToFloz(amount,unit){
+  if(unit==="floz")return amount;
+  if(unit==="ml")return amount/29.5735;
+  if(unit==="ozwt")return amount;
+  return amount;
+}
 
-  box.className = "result";
+function checkStatus(actual,target){
+  if(target.type==="fixed"){
+    const low=target.perGal*0.97, high=target.perGal*1.03;
+    if(actual>=low && actual<=high)return "✅ On label fixed rate";
+    if(actual<low)return "⚠️ Below label fixed rate";
+    return "⚠️ Above label fixed rate";
+  }
 
-  if(product === ""){
-    box.innerHTML = "Select Product";
+  const rate=target.aiRate || target.rate;
+  const low=rate*0.92, high=rate*1.08;
+  if(actual>=low && actual<=high)return "✅ Within tolerance of selected target";
+  if(actual<low)return "⚠️ Below selected target";
+  return "⚠️ Above selected target";
+}
+
+function lookupRate(){
+  const product=$("lookupProduct").value;
+  const tank=parseFloat($("lookupTank").value);
+  const idx=parseInt($("lookupTarget").value);
+  if(!product){$("lookupResult").textContent="Select a product.";return;}
+
+  const p=PRODUCTS[product];
+  const t=p.targets[idx];
+  const amount=t.perGal*tank;
+
+  $("lookupResult").innerHTML=
+`Product: ${product}
+Tank Size: ${tank} gal
+Target: ${t.name}
+
+Add: ${round(amount)} ${t.unit || p.unit}
+
+${t.finalText ? "Finished Actives: "+t.finalText+"\n\n" : ""}${p.notes}`;
+}
+
+function calcRate(){
+  const product=$("rateProduct").value;
+  const tank=parseFloat($("rateTank").value);
+  const idx=parseInt($("rateTarget").value);
+  if(!product){$("rateResult").textContent="Select a product.";return;}
+
+  const p=PRODUCTS[product], t=p.targets[idx];
+  const amount=t.perGal*tank;
+
+  $("rateResult").innerHTML=
+`Product: ${product}
+Tank: ${tank} gal
+Target: ${t.name}
+
+Add: ${round(amount)} ${t.unit || p.unit}
+
+Rate Status: ✅ Label-rate amount calculated from database.
+
+${p.notes}`;
+}
+
+function calcAI(){
+  const product=$("aiProduct").value;
+  const amount=parseFloat($("amount").value);
+  const unit=$("unit").value;
+  const gallons=parseFloat($("gallons").value);
+  const idx=parseInt($("aiTarget").value);
+
+  if(!product || !amount || !gallons){$("aiResult").textContent="Fill out product, amount, and gallons.";return;}
+
+  const p=PRODUCTS[product], t=p.targets[idx];
+
+  if(t.type==="fixed"){
+    const perGal=amount/gallons;
+    $("aiResult").innerHTML=
+`Product: ${product}
+Mix: ${amount} ${unit} / ${gallons} gal
+Actual Rate: ${round(perGal)} ${t.unit || p.unit}/gal
+Target Rate: ${t.perGal} ${t.unit || p.unit}/gal
+
+${checkStatus(perGal,t)}
+
+${p.notes}`;
     return;
   }
 
-  const p = PRODUCTS[product];
-
-  if(p.unit === "manual"){
-    box.innerHTML = product + "<br>" + p.note;
-    return;
+  let finished;
+  if(p.form==="dry"){
+    finished=dryAI(amount,gallons,p.ai);
+  }else{
+    const floz=amountToFloz(amount,unit);
+    finished=liquidAI(floz,gallons,p.ai);
   }
 
-  const min = p.rateMin * currentTank;
-  const max = p.rateMax * currentTank;
-  const rec = p.rateRec * currentTank;
+  $("aiResult").innerHTML=
+`Product: ${product}
+Mix: ${amount} ${unit} / ${gallons} gal
+Finished AI: ${round(finished)}%
 
-  if(p.rateMin === p.rateMax){
-    box.innerHTML =
-      product +
-      "<br>Add " +
-      cleanNum(rec) +
-      " " +
-      p.unit +
-      "<br>For " +
-      currentTank +
-      " gallons<br><br>" +
-      p.note;
-  } else {
-    box.innerHTML =
-      product +
-      "<br>Label range: " +
-      cleanNum(min) +
-      "–" +
-      cleanNum(max) +
-      " " +
-      p.unit +
-      "<br>Helper rate: " +
-      cleanNum(rec) +
-      " " +
-      p.unit +
-      "<br>For " +
-      currentTank +
-      " gallons<br><br>" +
-      p.note;
-  }
-}function lookupRate(){
-  const product = document.getElementById("rateProduct").value;
-  const tank = parseFloat(document.getElementById("rateTank").value);
-  const box = document.getElementById("rateResult");
-  const p = PRODUCTS[product];
+Selected Target: ${t.name}
+Target AI: ${round(t.aiRate || t.rate)}%
 
-  box.className = "result";
+${checkStatus(finished,t)}
 
-  if(p.unit === "manual"){
-    box.innerHTML = product + "<br>" + p.note;
-    return;
-  }
-
-  const min = p.rateMin * tank;
-  const max = p.rateMax * tank;
-  const rec = p.rateRec * tank;
-
-  if(p.rateMin === p.rateMax){
-    box.innerHTML =
-      product +
-      "<br>Add " + cleanNum(rec) + " " + p.unit +
-      "<br>For " + tank + " gallons<br><br>" +
-      p.note;
-  } else {
-    box.innerHTML =
-      product +
-      "<br>Label range: " + cleanNum(min) + "–" + cleanNum(max) + " " + p.unit +
-      "<br>Helper rate: " + cleanNum(rec) + " " + p.unit +
-      "<br>For " + tank + " gallons<br><br>" +
-      p.note;
-  }
-}
-
-function calcMix(){
-  const product = document.getElementById("mixProduct").value;
-  const amount = parseFloat(document.getElementById("mixAmount").value);
-  const gallons = parseFloat(document.getElementById("mixGallons").value);
-  const p = PRODUCTS[product];
-  const box = document.getElementById("mixResult");
-
-  box.className = "result";
-
-  if(!amount || !gallons){
-    box.innerHTML = "Enter amount and gallons.";
-    return;
-  }
-
-  const activePercent = calcActivePercent(amount, gallons, p);
-  const check = labelCheck(amount, gallons, p);
-
-  box.className = "result " + check.className;
-
-  box.innerHTML =
-    "Product: " + product +
-    "<br>Active Ingredient: " + activePercent.toFixed(4) + "%" +
-    "<br><br>" + check.message +
-    "<br><br>" + p.note;
-}
-
-function calcActivePercent(amount, gallons, p){
-  if(currentUnit === "floz"){
-    return (amount * p.ai) / (gallons * 128);
-  }
-
-  if(currentUnit === "ml"){
-    return (amount * p.ai) / (gallons * 3785.41);
-  }
-
-  if(currentUnit === "g"){
-    return ((amount * (p.ai / 100)) / (gallons * 3785.41)) * 100;
-  }
-
-  if(currentUnit === "oz"){
-    return (((amount * 28.3495) * (p.ai / 100)) / (gallons * 3785.41)) * 100;
-  }
-
-  return 0;
-}
-
-function labelCheck(amount, gallons, p){
-  if(currentUnit !== p.unit){
-    return {
-      className:"warn",
-      message:
-        "Rate check skipped: selected unit is " +
-        currentUnit +
-        ", but this product uses " +
-        p.unit +
-        "."
-    };
-  }
-
-  const minNeeded = p.rateMin * gallons;
-  const maxNeeded = p.rateMax * gallons;
-  const recNeeded = p.rateRec * gallons;
-  const tolerance = 0.01;
-
-  if(amount < minNeeded - tolerance){
-    return {
-      className:"bad",
-      message:
-        "UNDER label helper range." +
-        "<br>You entered: " +
-        cleanNum(amount) +
-        " " +
-        p.unit +
-        "<br>Minimum for " +
-        gallons +
-        " gal: " +
-        cleanNum(minNeeded) +
-        " " +
-        p.unit
-    };
-  }
-
-  if(amount > maxNeeded + tolerance){
-    return {
-      className:"bad",
-      message:
-        "OVER label helper range." +
-        "<br>You entered: " +
-        cleanNum(amount) +
-        " " +
-        p.unit +
-        "<br>Maximum for " +
-        gallons +
-        " gal: " +
-        cleanNum(maxNeeded) +
-        " " +
-        p.unit
-    };
-  }
-
-  if(p.rateMin === p.rateMax){
-    return {
-      className:"good",
-      message:
-        "OK — matches label helper rate." +
-        "<br>You entered: " +
-        cleanNum(amount) +
-        " " +
-        p.unit +
-        "<br>Required for " +
-        gallons +
-        " gal: " +
-        cleanNum(recNeeded) +
-        " " +
-        p.unit
-    };
-  }
-
-  return {
-    className:"good",
-    message:
-      "OK — within label helper range." +
-      "<br>You entered: " +
-      cleanNum(amount) +
-      " " +
-      p.unit +
-      "<br>Range for " +
-      gallons +
-      " gal: " +
-      cleanNum(minNeeded) +
-      "–" +
-      cleanNum(maxNeeded) +
-      " " +
-      p.unit +
-      "<br>Helper rate: " +
-      cleanNum(recNeeded) +
-      " " +
-      p.unit
-  };
+${p.notes}`;
 }
 
 function calcRefill(){
-  const origAmount = parseFloat(document.getElementById("origAmount").value);
-  const origTank = parseFloat(document.getElementById("origTank").value);
-  const added = parseFloat(document.getElementById("added").value);
-  const box = document.getElementById("refillResult");
+  const product=$("refillProduct").value;
+  const origAmount=parseFloat($("origAmount").value);
+  const origGal=parseFloat($("origGallons").value);
+  const addGal=parseFloat($("addGallons").value);
 
-  box.className = "result";
-
-  if(!origAmount || !origTank || !added){
-    box.innerHTML = "Enter refill information.";
+  if(!product || !origAmount || !origGal || !addGal){
+    $("refillResult").textContent="Fill out product, original amount, original gallons, and gallons added.";
     return;
   }
 
-  const ratePerGal = origAmount / origTank;
-  const productToAdd = ratePerGal * added;
+  const perGal=origAmount/origGal;
+  const addAmount=perGal*addGal;
+  const finalGal=origGal+addGal;
+  const finalAmount=origAmount+addAmount;
 
-  box.innerHTML =
-    "Add " +
-    cleanNum(productToAdd) +
-    " product units<br>Add " +
-    added +
-    " gallons water";
+  $("refillResult").innerHTML=
+`Product: ${product}
+
+Original Mix:
+${origAmount} fl oz / ${origGal} gal
+Original Rate: ${round(perGal)} fl oz/gal
+
+To Add ${addGal} gal Water:
+Add ${round(addAmount)} fl oz product
+
+Final Tank:
+${round(finalAmount)} fl oz / ${round(finalGal)} gal
+
+✅ Maintains the same original dilution strength.`;
 }
 
-function cleanNum(num){
-  return Number(num.toFixed(3)).toString();
-}
+function round(n){return Math.round(n*1000)/1000}
 
-fillSelects();
-updateLookup();
-
+init();
 </script>
-
 </body>
 </html>
